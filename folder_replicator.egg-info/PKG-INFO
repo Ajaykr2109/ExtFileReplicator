@@ -1,10 +1,31 @@
+Metadata-Version: 2.4
+Name: folder-replicator
+Version: 0.1.1
+Summary: Folder replication tool with VCS-like capabilities
+Home-page: https://github.com/Ajaykr2109/ExtFileReplicator
+Author: ajay2109
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Requires-Dist: watchdog>=2.0.0
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
 # Folder Replicator
 
 A powerful folder synchronization tool with version control-like capabilities, built in Python.
 
 ## Features
 
-    One-way folder synchronization (source → destination)
+    One-way folder synchronization (source â†’ destination)
 
     Real-time file monitoring with automatic updates
 

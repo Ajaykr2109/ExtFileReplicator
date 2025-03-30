@@ -1,0 +1,14 @@
+setup.py
+folder_replicator/__init__.py
+folder_replicator/cli.py
+folder_replicator/config_manager.py
+folder_replicator/file_operations.py
+folder_replicator/logger.py
+folder_replicator/synchronization.py
+folder_replicator/watcher.py
+folder_replicator.egg-info/PKG-INFO
+folder_replicator.egg-info/SOURCES.txt
+folder_replicator.egg-info/dependency_links.txt
+folder_replicator.egg-info/entry_points.txt
+folder_replicator.egg-info/requires.txt
+folder_replicator.egg-info/top_level.txt

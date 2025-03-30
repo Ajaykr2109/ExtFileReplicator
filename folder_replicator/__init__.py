@@ -4,10 +4,12 @@ from .watcher import ReplicationWatcher
 from .cli import main
 from .logger import setup_logger
 
+
 __all__ = [
     'ConfigManager',
     'Synchronizer',
     'ReplicationWatcher',
     'main',
-    'setup_logger'
+    'setup_logger',
+
 ]
