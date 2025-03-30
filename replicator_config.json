@@ -1,3 +1,4 @@
 {
-  "replications": []
+  "replications": [],
+  "sync_interval": 1
 }

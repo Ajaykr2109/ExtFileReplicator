@@ -104,148 +104,67 @@ A powerful folder synchronization tool with version control-like capabilities, b
     MIT License. See LICENSE for details.
 
 --
+#Commands
 
-# Folder Replicator CLI Commands (Latest Version)
+## Folder Replicator CLI Commands (Latest Version)
 
-Here are all the available command-line interface commands for your Folder Replicator application:
+Here's the breakdown of all commands and their variations in your `cli.py` file:
 
-## Basic Commands
+### Main Commands (8 total):
 
-### 1. Add a new replication pair
+1. **add** - Add a new replication pair
 
-```bash
-folder-replicate add <source_path> <destination_path> [--exclude PATTERNS]
-```
+   - `frep add <source> <destination> [--exclude PATTERNS]`
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-Example:
+2. **sync** - Run synchronization
 
-```bash
-folder-replicate add C:\Users\Me\Documents D:\Backups\Documents --exclude *.tmp temp/
-```
+   - `frep sync`
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-### 2. Run a one-time synchronization
+3. **watch** - Continuous monitoring mode
 
-```bash
-folder-replicate sync
-```
+   - `frep watch [--interval MINUTES]`
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-- Synchronizes all configured replication pairs
-- Shows detailed statistics of operations
+4. **list** - List all replications
 
-### 3. Start continuous watching with periodic sync
+   - `frep list`
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-```bash
-folder-replicate watch [--interval MINUTES]
-```
+5. **remove** - Remove a replication
 
-Example (sync every 30 minutes):
+   - `frep remove <source_path>`
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-```bash
-folder-replicate watch --interval 30
-```
+6. **status** - Check replication status
 
-## Advanced Commands
+   - `frep status` (all replications)
+   - `frep status <source_path>` (specific replication)
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-### 4. List all configured replications
+7. **logs** - View logs
 
-```bash
-folder-replicate list
-```
+   - `frep logs` (show full log)
+   - `frep logs --tail N` (show last N lines)
+   - `frep logs --clear` (clear log file)
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-- Shows all source-destination pairs
-- Displays last sync time for each
+8. **config** - Configuration management
+   - Subcommands:
+     - `frep config set <option> <value>`
+       - Options: `sync_interval`, `log_level`, `max_log_size`
+     - `frep config show`
+   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
 
-### 5. Remove a replication
+### Global Flags (4 total):
 
-```bash
-folder-replicate remove <source_path>
-```
+Available for all commands:
 
-Example:
-
-```bash
-folder-replicate remove C:\Users\Me\Documents
-```
-
-### 6. Check replication status
-
-```bash
-folder-replicate status [source_path]
-```
-
-Example (check all):
-
-```bash
-folder-replicate status
-```
-
-Example (check specific):
-
-```bash
-folder-replicate status C:\Users\Me\Documents
-```
-
-### 7. View logs
-
-```bash
-folder-replicate logs [--tail LINES] [--clear]
-```
-
-Examples:
-
-```bash
-folder-replicate logs              # Show complete log
-folder-replicate logs --tail 50    # Show last 50 lines
-folder-replicate logs --clear      # Clear log file
-```
-
-## Configuration Commands
-
-### 8. Set global options
-
-```bash
-folder-replicate config set <option> <value>
-```
-
-Available options:
-
-- `sync_interval` (minutes)
-- `log_level` (DEBUG, INFO, WARNING, ERROR)
-- `max_log_size` (in MB)
-
-Example:
-
-```bash
-folder-replicate config set sync_interval 60
-```
-
-### 9. Show current configuration
-
-```bash
-folder-replicate config show
-```
-
-## Help Command
-
-### 10. Display help
-
-```bash
-folder-replicate --help
-folder-replicate <command> --help
-```
-
-## Special Flags (Available for Most Commands)
-
-- `--verbose` - Show detailed output
-- `--quiet` - Only show errors
-- `--dry-run` - Simulate operations without making changes
-- `--force` - Skip confirmation prompts
-
-Example with flags:
-
-```bash
-folder-replicate sync --verbose --dry-run
-```
+1. `--verbose` - Show detailed output
+2. `--quiet` - Only show errors
+3. `--dry-run` - Simulation mode
+4. `--force` - Skip confirmations
 
 ## Log File Location
 

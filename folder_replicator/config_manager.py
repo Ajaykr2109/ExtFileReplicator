@@ -95,29 +95,18 @@ class ConfigManager:
         return self._log_dir / f"folder_replicator_{current_date}.log"
 
     def set_config(self, option, value):
-        """Set a configuration option"""
+        """Set a configuration value"""
         if option == 'log_level':
-            if value not in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
-                return False
-        elif option == 'sync_interval':
-            try:
-                value = int(value)
-            except ValueError:
-                return False
-        elif option == 'max_log_size':
-            try:
-                value = float(value)
-            except ValueError:
-                return False
-
+            value = value.upper()
         self.config[option] = value
         return self.save_config()
 
     def get_config(self):
+        """Get current configuration"""
         return {
             'sync_interval': self.config.get('sync_interval', 60),
             'log_level': self.config.get('log_level', 'INFO'),
-            'max_log_size': self.config.get('max_log_size', 10)  # MB
+            'max_log_size': self.config.get('max_log_size', 10)
         }
 
     def get_log_dir(self):

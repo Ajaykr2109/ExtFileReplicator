@@ -13,6 +13,14 @@ def main():
     logger = setup_logger(config_manager)
     parser = argparse.ArgumentParser(description='Folder Replication Tool')
     subparsers = parser.add_subparsers(dest='command', required=True)
+    parser.add_argument('--verbose', action='store_true',
+                        help='Verbose output')
+    parser.add_argument('--quiet', action='store_true',
+                        help='Only show errors')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Simulation mode')
+    parser.add_argument('--force', action='store_true',
+                        help='Skip confirmations')
 
     # Add command
     add_parser = subparsers.add_parser(
@@ -60,11 +68,13 @@ def main():
     # Config set
     config_set = config_subparsers.add_parser(
         'set', help='Set configuration value')
-    config_set.add_argument('option', help='Option to set')
+    config_set.add_argument(
+        'option', help='Option to set (sync_interval/log_level/max_log_size)')
     config_set.add_argument('value', help='Value to set')
 
     # Config show
-    config_subparsers.add_parser('show', help='Show current configuration')
+    config_subparsers.add_parser(
+        'show', help='Show current configuration')
 
     # Common arguments
     for p in [add_parser, sync_parser, watch_parser, remove_parser, status_parser, logs_parser, config_set]:
@@ -218,20 +228,22 @@ def main():
                             "Max log size must be a positive number (MB)")
                         return 1
 
-                if config.set_config(args.option, args.value):
+                if config_manager.set_config(args.option, args.value):
                     logger.info(
                         f"Configuration updated: {args.option} = {args.value}")
                 else:
                     logger.error("Failed to update configuration")
 
             elif args.config_command == 'show':
-                config = config.get_config()
+                config = config_manager.get_config()
                 print("\nCurrent Configuration:")
                 print(
                     f"Sync interval: {config.get('sync_interval', 60)} minutes")
                 print(f"Log level: {config.get('log_level', 'INFO')}")
                 print(f"Max log size: {config.get('max_log_size', 10)} MB")
-                print(f"Log directory: {config.get_log_dir()}")
+                # Call on config_manager instance
+                print(f"Log directory: {config_manager.get_log_dir()}")
+
         elif args.command == 'logs':
             log_file = config_manager.get_log_file()
 
