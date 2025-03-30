@@ -1,7 +1,7 @@
 import argparse
-from .config_manager import ConfigManager
-from .synchronization import Synchronizer
-from .watcher import ReplicationWatcher
+from folder_replicator.config_manager import ConfigManager
+from folder_replicator.synchronization import Synchronizer
+from folder_replicator.watcher import ReplicationWatcher
 
 
 def main():
