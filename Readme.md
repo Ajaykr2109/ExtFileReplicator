@@ -77,6 +77,28 @@ A powerful folder synchronization tool with version control-like capabilities, b
 
     Open a Pull Request
 
+## Logging
+
+### Platform-specific log locations:
+
+        Windows: %LOCALAPPDATA%\FolderReplicator\Logs
+
+        macOS: ~/Library/Logs/FolderReplicator
+
+        Linux: ~/.local/share/FolderReplicator/logs
+
+    ### Daily log files:
+
+        Creates new log files each day with names like folder_replicator_2023-11-15.log
+
+        Comprehensive logging:
+
+        Both file and console output
+
+        Timestamps in log files
+
+        Different log levels (INFO, WARNING, ERROR)
+
 ## License
 
     MIT License. See LICENSE for details.

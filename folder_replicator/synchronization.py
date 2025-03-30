@@ -1,7 +1,10 @@
 import os
 import time
+import logging
 import shutil
-from folder_replicator.file_operations import FileOperations
+from .file_operations import FileOperations
+
+logger = logging.getLogger("FolderReplicator")
 
 
 class Synchronizer:
@@ -20,23 +23,23 @@ class Synchronizer:
             destination = replication['destination']
             exclusions = replication.get('exclusions', [])
 
-            print(f"\nStarting synchronization: {source} → {destination}")
+            logger.info(f"Starting synchronization: {source} → {destination}")
             start_time = time.time()
             stats = {'copied': 0, 'skipped': 0, 'removed': 0, 'errors': 0}
 
             if not FileOperations.ensure_directory_exists(destination):
+                logger.error(
+                    f"Failed to create destination directory: {destination}")
                 return False
 
             for root, dirs, files in os.walk(source):
-
                 dirs[:] = [d for d in dirs if not self._is_excluded(
                     os.path.join(root, d), exclusions)]
-
                 rel_path = os.path.relpath(root, source)
                 dest_dir = os.path.join(destination, rel_path)
-
                 if not FileOperations.ensure_directory_exists(dest_dir):
                     stats['errors'] += 1
+                    logger.warning(f"Failed to create directory: {dest_dir}")
                     continue
 
                 for file in files:
@@ -54,9 +57,10 @@ class Synchronizer:
 
                     if FileOperations.safe_copy(src_file, dest_file):
                         stats['copied'] += 1
-                        print(f"Copied: {src_file} → {dest_file}")
+                        logger.info(f"Copied: {src_file} → {dest_file}")
                     else:
                         stats['errors'] += 1
+                        logger.warning(f"Failed to copy: {src_file}")
 
             del_stats = self._cleanup_deleted_items(
                 source, destination, exclusions)
@@ -69,16 +73,17 @@ class Synchronizer:
             )
 
             elapsed = time.time() - start_time
-            print("\nSynchronization statistics:")
-            print(f"- Files copied: {stats['copied']}")
-            print(f"- Files skipped (unchanged): {stats['skipped']}")
-            print(f"- Files/directories removed: {stats['removed']}")
-            print(f"- Errors encountered: {stats['errors']}")
-            print(f"Completed in {elapsed:.2f} seconds")
+            logger.info("Synchronization statistics: " +
+                        f"Copied: {stats['copied']}, " +
+                        f"Skipped: {stats['skipped']}, " +
+                        f"Removed: {stats['removed']}, " +
+                        f"Errors: {stats['errors']}, " +
+                        f"Time: {elapsed:.2f}s")
             return True
 
         except Exception as e:
-            print(f"Error during synchronization: {e}")
+            logger.error(
+                f"Error during synchronization: {str(e)}", exc_info=True)
             return False
 
     def _cleanup_deleted_items(self, source, destination, exclusions):
@@ -86,14 +91,12 @@ class Synchronizer:
         stats = {'removed': 0, 'errors': 0}
         try:
             for root, dirs, files in os.walk(destination):
-                # Skip excluded directories
                 dirs[:] = [d for d in dirs if not self._is_excluded(
                     os.path.join(root, d), exclusions)]
 
                 rel_path = os.path.relpath(root, destination)
                 src_dir = os.path.join(source, rel_path)
 
-                # Check files
                 for file in files:
                     dest_file = os.path.join(root, file)
                     src_file = os.path.join(src_dir, file)
@@ -110,7 +113,6 @@ class Synchronizer:
                             stats['errors'] += 1
                             print(f"Error removing file {dest_file}: {e}")
 
-                # Check directories
                 for dir in dirs:
                     dest_dir_path = os.path.join(root, dir)
                     src_dir_path = os.path.join(src_dir, dir)
