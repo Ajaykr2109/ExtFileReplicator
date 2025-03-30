@@ -23,46 +23,36 @@ class Synchronizer:
             print(f"\nStarting synchronization: {source} → {destination}")
             start_time = time.time()
 
-            # Create destination root if needed
             if not FileOperations.ensure_directory_exists(destination):
                 return False
 
-            # Walk through source directory
             for root, dirs, files in os.walk(source):
-                # Skip excluded directories
+
                 dirs[:] = [d for d in dirs if not self._is_excluded(
                     os.path.join(root, d), exclusions)]
 
-                # Calculate relative path and destination path
                 rel_path = os.path.relpath(root, source)
                 dest_dir = os.path.join(destination, rel_path)
 
-                # Create destination directory if it doesn't exist
                 if not FileOperations.ensure_directory_exists(dest_dir):
                     continue
 
-                # Process files
                 for file in files:
                     src_file = os.path.join(root, file)
                     dest_file = os.path.join(dest_dir, file)
 
-                    # Skip excluded files
                     if self._is_excluded(src_file, exclusions):
                         continue
 
-                    # Skip if destination file exists and is identical
                     if os.path.exists(dest_file):
                         if FileOperations.files_identical(src_file, dest_file):
                             continue
 
-                    # Copy the file
                     if FileOperations.safe_copy(src_file, dest_file):
                         print(f"Copied: {src_file} → {dest_file}")
 
-            # Handle directory deletions (optional)
             self._cleanup_deleted_items(source, destination, exclusions)
 
-            # Update last sync time
             self.config_manager.update_last_sync(
                 self.config_manager.get_replications().index(replication),
                 time.time()
@@ -78,21 +68,20 @@ class Synchronizer:
 
     def _is_excluded(self, path, exclusions):
         """Check if path matches any exclusion pattern"""
-        path = path.replace('\\', '/')  # Normalize path
+        path = path.replace('\\', '/')
         return any(excl in path for excl in exclusions)
 
     def _cleanup_deleted_items(self, source, destination, exclusions):
         """Remove files/directories in destination that don't exist in source"""
         try:
             for root, dirs, files in os.walk(destination):
-                # Skip excluded directories
+
                 dirs[:] = [d for d in dirs if not self._is_excluded(
                     os.path.join(root, d), exclusions)]
 
                 rel_path = os.path.relpath(root, destination)
                 src_dir = os.path.join(source, rel_path)
 
-                # Check files
                 for file in files:
                     dest_file = os.path.join(root, file)
                     src_file = os.path.join(src_dir, file)
@@ -107,7 +96,6 @@ class Synchronizer:
                         except Exception as e:
                             print(f"Error removing file {dest_file}: {e}")
 
-                # Check directories
                 for dir in dirs:
                     dest_dir_path = os.path.join(root, dir)
                     src_dir_path = os.path.join(src_dir, dir)
