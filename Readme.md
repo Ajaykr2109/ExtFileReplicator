@@ -1,190 +1,120 @@
+Here's a clean, well-structured documentation for your Folder Replicator:
+
 # Folder Replicator
 
-A powerful folder synchronization tool with version control-like capabilities, built in Python.
+A lightweight yet powerful folder synchronization tool with version control-like capabilities.
 
 ## Features
 
-    One-way folder synchronization (source → destination)
-
-    Real-time file monitoring with automatic updates
-
-    Fast change detection using file hashing
-
-    Handles all file types (binary, text, hidden files)
-
-    Preserves file timestamps and metadata
-
-    Configurable file/folder exclusions
-
-    Lightweight and cross-platform
+- 🔄 One-way folder synchronization (source → destination)
+- 👁️ Real-time file monitoring with automatic updates
+- ⚡ Fast change detection using file hashing
+- 📁 Handles all file types (binary, text, hidden files)
+- ⏱️ Preserves file timestamps and metadata
+- 🚫 Configurable file/folder exclusions
+- 🖥️ Cross-platform (Windows/macOS/Linux)
 
 ## Installation
 
-    Prerequisites
-    Python 3.6+
-    pip package manager
+### Requirements
 
-## Quick Install
+- Python 3.6+
+- pip package manager
 
-    pip install git+https://github.com/Ajaykr2109/ExtFileReplicator
+### Quick Install
 
-## Development Install
+```bash
+pip install git+https://github.com/Ajaykr2109/ExtFileReplicator
+```
 
-    Copy
-    git clone https://github.com/yourusername/folder-replicator.git
-    cd folder-replicator
-    pip install -e .
+### Development Install
 
-## Usage
+```bash
+git clone https://github.com/Ajaykr2109/ExtFileReplicator.git
+cd ExtFileReplicator
+pip install -e .
+```
 
-    Basic Commands
-    folder-replicate add /path/to/source /path/to/destination - Add new replication pair
-    folder-replicate sync - Run one-time synchronization
-    folder-replicate watch - Start continuous monitoring
+## Command Reference
 
-## Advanced Options
+### Basic Operations
 
-    folder-replicate add /source /dest --exclude *.tmp temp/ - Add with exclusions
-    folder-replicate --help - View all commands
+| Command               | Description              | Example                          |
+| --------------------- | ------------------------ | -------------------------------- |
+| `add <source> <dest>` | Add new replication pair | `frep add ~/Docs ~/Backups/Docs` |
+| `sync`                | Run one-time sync        | `frep sync`                      |
+| `watch`               | Continuous monitoring    | `frep watch --interval 30`       |
 
-## Example Workflow
+### Advanced Operations
 
-    folder-replicate add ~/Documents ~/Backups/Documents_backup
+| Command                  | Description           | Example                            |
+| ------------------------ | --------------------- | ---------------------------------- |
+| `list`                   | List all replications | `frep list`                        |
+| `remove <source>`        | Remove replication    | `frep remove ~/Docs`               |
+| `status [source]`        | Check sync status     | `frep status ~/Docs`               |
+| `logs [--tail N]`        | View logs             | `frep logs --tail 50`              |
+| `logs --clear`           | Clear logs            | `frep logs --clear`                |
+| `config set <opt> <val>` | Set configuration     | `frep config set sync_interval 60` |
+| `config show`            | Show configuration    | `frep config show`                 |
 
-    folder-replicate sync
+### Common Flags
 
-    folder-replicate watch (Press Ctrl+C to stop)
+| Flag        | Description        |
+| ----------- | ------------------ |
+| `--verbose` | Detailed output    |
+| `--quiet`   | Only show errors   |
+| `--dry-run` | Simulation mode    |
+| `--force`   | Skip confirmations |
+
+## Usage Examples
+
+1. **Basic Setup**
+
+```bash
+frep add ~/Documents ~/Backups/Documents --exclude *.tmp cache/
+frep sync
+```
+
+2. **Continuous Monitoring**
+
+```bash
+frep watch --interval 60  # Syncs every hour
+```
+
+3. **Troubleshooting**
+
+```bash
+frep logs --tail 20  # Check recent logs
+frep status ~/Documents  # Check sync status
+```
 
 ## Configuration
 
-    Settings are stored in replicator_config.json in your working directory. You can:
-
-    Manually edit this file when the tool isn't running
-
-    View current replications
-
-    Modify exclusion patterns
-
-## Contributing
-
-    Fork the repository
-
-    Create a feature branch
-
-    Commit your changes
-
-    Push to the branch
-
-    Open a Pull Request
-
-## Logging
-
-### Platform-specific log locations:
-
-        Windows: %LOCALAPPDATA%\FolderReplicator\Logs
-
-        macOS: ~/Library/Logs/FolderReplicator
-
-        Linux: ~/.local/share/FolderReplicator/logs
-
-    ### Daily log files:
-
-        Creates new log files each day with names like folder_replicator_2023-11-15.log
-
-        Comprehensive logging:
-
-        Both file and console output
-
-        Timestamps in log files
-
-        Different log levels (INFO, WARNING, ERROR)
-
-## License
-
-    MIT License. See LICENSE for details.
-
---
-#Commands
-
-## Folder Replicator CLI Commands (Latest Version)
-
-Here's the breakdown of all commands and their variations in your `cli.py` file:
-
-### Main Commands (8 total):
-
-1. **add** - Add a new replication pair
-
-   - `frep add <source> <destination> [--exclude PATTERNS]`
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-2. **sync** - Run synchronization
-
-   - `frep sync`
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-3. **watch** - Continuous monitoring mode
-
-   - `frep watch [--interval MINUTES]`
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-4. **list** - List all replications
-
-   - `frep list`
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-5. **remove** - Remove a replication
-
-   - `frep remove <source_path>`
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-6. **status** - Check replication status
-
-   - `frep status` (all replications)
-   - `frep status <source_path>` (specific replication)
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-7. **logs** - View logs
-
-   - `frep logs` (show full log)
-   - `frep logs --tail N` (show last N lines)
-   - `frep logs --clear` (clear log file)
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-8. **config** - Configuration management
-   - Subcommands:
-     - `frep config set <option> <value>`
-       - Options: `sync_interval`, `log_level`, `max_log_size`
-     - `frep config show`
-   - With flags: `--verbose`, `--quiet`, `--dry-run`, `--force`
-
-### Global Flags (4 total):
-
-Available for all commands:
-
-1. `--verbose` - Show detailed output
-2. `--quiet` - Only show errors
-3. `--dry-run` - Simulation mode
-4. `--force` - Skip confirmations
-
-## Log File Location
-
-Logs are automatically stored at:
-
-- **Windows**: `%LOCALAPPDATA%\FolderReplicator\Logs\`
-- **macOS**: `~/Library/Logs/FolderReplicator/`
-- **Linux**: `~/.local/share/FolderReplicator/logs/`
+- **Config File**: `replicator_config.json` in working directory
+- **Log Locations**:
+  - Windows: `%LOCALAPPDATA%\FolderReplicator\Logs\`
+  - macOS: `~/Library/Logs/FolderReplicator/`
+  - Linux: `~/.local/share/FolderReplicator/logs/`
 
 ## Exit Codes
 
-- `0` - Success
-- `1` - General error
-- `2` - Invalid arguments
-- `3` - File/folder access error
-- `4` - Configuration error
+- `0`: Success
+- `1`: General error
+- `2`: Invalid arguments
+- `3`: File access error
+- `4`: Configuration error
 
-You can check the exit code in scripts using:
+## License
 
-```bash
-echo $?  # On Linux/macOS
-echo %ERRORLEVEL%  # On Windows
-```
+MIT License - See [LICENSE](LICENSE) for details.
+
+---
+
+This version:
+
+- Removes redundant information
+- Organizes commands in an easy-to-read table format
+- Keeps all essential usage information
+- Provides clear examples
+- Maintains consistent formatting
+- Includes all commands from your implementation
