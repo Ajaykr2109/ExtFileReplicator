@@ -26,7 +26,7 @@ A powerful folder synchronization tool with version control-like capabilities, b
 
 ## Quick Install
 
-    pip install git+https://github.com/yourusername/folder-replicator.git
+    pip install git+https://github.com/Ajaykr2109/ExtFileReplicator
 
 ## Development Install
 
