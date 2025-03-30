@@ -18,6 +18,8 @@ def main():
 
     watch_parser = subparsers.add_parser(
         'watch', help='Watch for changes and auto-sync')
+    watch_parser.add_argument('--interval', type=int, default=60,
+                              help='Periodic sync interval in minutes (default: 60)')
 
     args = parser.parse_args()
 
@@ -39,10 +41,7 @@ def main():
         synchronizer.sync_all()
 
     elif args.command == 'watch':
-        print("Starting watch mode...")
-        watcher = ReplicationWatcher(synchronizer)
+        print(
+            f"Starting watch mode with periodic sync every {args.interval} minutes...")
+        watcher = ReplicationWatcher(synchronizer, args.interval)
         watcher.watch()
-
-
-if __name__ == "__main__":
-    main()
