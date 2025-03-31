@@ -1,5 +1,3 @@
-Here's a clean, well-structured documentation for your Folder Replicator:
-
 # Folder Replicator
 
 A lightweight yet powerful folder synchronization tool with version control-like capabilities.
@@ -109,12 +107,3 @@ frep status ~/Documents  # Check sync status
 MIT License - See [LICENSE](LICENSE) for details.
 
 ---
-
-This version:
-
-- Removes redundant information
-- Organizes commands in an easy-to-read table format
-- Keeps all essential usage information
-- Provides clear examples
-- Maintains consistent formatting
-- Includes all commands from your implementation
