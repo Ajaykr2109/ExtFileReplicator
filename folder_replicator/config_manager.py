@@ -17,9 +17,9 @@ class ConfigManager:
         if system == "Windows":
             log_dir = Path(os.environ.get('LOCALAPPDATA', '')) / \
                 "FolderReplicator" / "Logs"
-        elif system == "Darwin":  # macOS
+        elif system == "Darwin":
             log_dir = Path.home() / "Library" / "Logs" / "FolderReplicator"
-        else:  # Linux and others
+        else:
             log_dir = Path.home() / ".local" / "share" / "FolderReplicator" / "logs"
 
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -124,7 +124,6 @@ class ConfigManager:
         if not hasattr(self, 'config'):
             self.config = {}
 
-        # Validate and convert values
         if option == 'sync_interval':
             try:
                 value = int(value)

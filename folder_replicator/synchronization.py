@@ -154,13 +154,11 @@ class Synchronizer:
         if not os.path.exists(destination):
             return {'error': 'Destination path does not exist'}
 
-        # Count files in source
         source_files = set()
         for root, _, files in os.walk(source):
             for file in files:
                 source_files.add(os.path.join(root, file))
 
-        # Count files in destination
         dest_files = set()
         for root, _, files in os.walk(destination):
             for file in files:
@@ -185,17 +183,15 @@ class Synchronizer:
         }
 
         try:
-            # Count source files
+
             if os.path.exists(source):
                 for root, _, files in os.walk(source):
                     stats['source_files'] += len(files)
 
-            # Count destination files
             if os.path.exists(destination):
                 for root, _, files in os.walk(destination):
                     stats['dest_files'] += len(files)
 
-            # Calculate pending changes
             stats['pending_changes'] = max(
                 0, stats['source_files'] - stats['dest_files'])
 

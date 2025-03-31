@@ -26,11 +26,9 @@ def setup_logger(config_manager):
     logger = logging.getLogger("FolderReplicator")
     logger.setLevel(logging.INFO)
 
-    # Clear existing handlers if any
     if logger.handlers:
         logger.handlers = []
 
-    # File handler with UTF-8 encoding
     file_handler = logging.FileHandler(log_file, encoding='utf-8')
     file_handler.setLevel(logging.INFO)
     file_formatter = logging.Formatter(
@@ -39,7 +37,6 @@ def setup_logger(config_manager):
     )
     file_handler.setFormatter(file_formatter)
 
-    # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_formatter = logging.Formatter('%(levelname)s: %(message)s')

@@ -8,7 +8,7 @@ from .logger import setup_logger
 
 
 def main():
-    # Main parser
+
     config_manager = ConfigManager()
     logger = setup_logger(config_manager)
     parser = argparse.ArgumentParser(description='Folder Replication Tool')
@@ -22,7 +22,6 @@ def main():
     parser.add_argument('--force', action='store_true',
                         help='Skip confirmations')
 
-    # Add command
     add_parser = subparsers.add_parser(
         'add', help='Add a new replication pair')
     add_parser.add_argument('source', help='Source directory path')
@@ -30,53 +29,43 @@ def main():
     add_parser.add_argument('--exclude', nargs='*',
                             default=[], help='File patterns to exclude')
 
-    # Sync command
     sync_parser = subparsers.add_parser('sync', help='Run synchronization')
 
-    # Watch command
     watch_parser = subparsers.add_parser(
         'watch', help='Continuous monitoring mode')
     watch_parser.add_argument('--interval', type=int,
                               default=60, help='Sync interval in minutes')
 
-    # List command
     subparsers.add_parser('list', help='List all replications')
 
-    # Remove command
     remove_parser = subparsers.add_parser(
         'remove', help='Remove a replication')
     remove_parser.add_argument('source_path', help='Source path to remove')
 
-    # Status command
     status_parser = subparsers.add_parser(
         'status', help='Check replication status')
     status_parser.add_argument(
         'source_path', nargs='?', help='Specific source to check')
 
-    # Logs command
     logs_parser = subparsers.add_parser('logs', help='View logs')
     logs_parser.add_argument('--tail', type=int, help='Show last N lines')
     logs_parser.add_argument(
         '--clear', action='store_true', help='Clear log file')
 
-    # Config command group
     config_parser = subparsers.add_parser(
         'config', help='Configuration management')
     config_subparsers = config_parser.add_subparsers(
         dest='config_command', required=True)
 
-    # Config set
     config_set = config_subparsers.add_parser(
         'set', help='Set configuration value')
     config_set.add_argument(
         'option', help='Option to set (sync_interval/log_level/max_log_size)')
     config_set.add_argument('value', help='Value to set')
 
-    # Config show
     config_subparsers.add_parser(
         'show', help='Show current configuration')
 
-    # Common arguments
     for p in [add_parser, sync_parser, watch_parser, remove_parser, status_parser, logs_parser, config_set]:
         p.add_argument('--verbose', action='store_true', help='Verbose output')
         p.add_argument('--quiet', action='store_true', help='Only show errors')
@@ -87,7 +76,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Initialize components
     config = ConfigManager()
     sync = Synchronizer(config)
 
@@ -128,7 +116,7 @@ def main():
             replications = config.get_replications()
 
             if args.source_path:
-                # Check specific replication status
+
                 rep = next(
                     (r for r in replications if r['source'] == args.source_path), None)
                 if not rep:
@@ -145,7 +133,7 @@ def main():
                 if status.get('errors'):
                     print(f"Errors: {status.get('errors', 0)}")
             else:
-                # Check all replications status
+
                 if not replications:
                     print("No replications configured")
                     return
@@ -241,7 +229,7 @@ def main():
                     f"Sync interval: {config.get('sync_interval', 60)} minutes")
                 print(f"Log level: {config.get('log_level', 'INFO')}")
                 print(f"Max log size: {config.get('max_log_size', 10)} MB")
-                # Call on config_manager instance
+
                 print(f"Log directory: {config_manager.get_log_dir()}")
 
         elif args.command == 'logs':
