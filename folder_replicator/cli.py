@@ -2,6 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 import platform
+import os
 from folder_replicator.config_manager import ConfigManager
 from folder_replicator.synchronization import Synchronizer
 from folder_replicator.watcher import ReplicationWatcher
@@ -12,78 +13,78 @@ from folder_replicator.service_manager import ServiceManager
 def main():
     config_manager = ConfigManager()
     logger = setup_logger(config_manager)
-    parser = argparse.ArgumentParser(description='Folder Replication Tool')
-    subparsers = parser.add_subparsers(dest='command', required=True)
 
-    # Common arguments
-    common_parser = argparse.ArgumentParser(add_help=False)
-    common_parser.add_argument(
-        '--verbose', action='store_true', help='Verbose output')
-    common_parser.add_argument(
-        '--quiet', action='store_true', help='Only show errors')
-    common_parser.add_argument(
-        '--dry-run', action='store_true', help='Simulation mode')
-    common_parser.add_argument(
-        '--force', action='store_true', help='Skip confirmations')
-    common_parser.add_argument('--daemon', action='store_true',
-                               help='Run as background service')
+    # Create main parser
+    parser = argparse.ArgumentParser(description='Folder Replication Tool')
+
+    # Add global arguments that apply to all commands
+    parser.add_argument('--verbose', action='store_true',
+                        help='Verbose output')
+    parser.add_argument('--quiet', action='store_true',
+                        help='Only show errors')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Simulation mode')
+    parser.add_argument('--force', action='store_true',
+                        help='Skip confirmations')
+
+    # Create subparsers for different commands
+    subparsers = parser.add_subparsers(
+        dest='command', required=True, title='commands')
 
     # Add command
     add_parser = subparsers.add_parser(
-        'add', parents=[common_parser], help='Add a new replication pair')
+        'add', help='Add a new replication pair')
     add_parser.add_argument('source', help='Source directory path')
     add_parser.add_argument('destination', help='Destination directory path')
     add_parser.add_argument('--exclude', nargs='*',
                             default=[], help='File patterns to exclude')
+    add_parser.add_argument('--daemon', action='store_true',
+                            help='Run as background service')
 
     # Sync command
-    sync_parser = subparsers.add_parser(
-        'sync', parents=[common_parser], help='Run synchronization')
+    sync_parser = subparsers.add_parser('sync', help='Run synchronization')
 
-    # Watch command - MODIFIED to support service mode
+    # Watch command
     watch_parser = subparsers.add_parser(
-        'watch', parents=[common_parser], help='Continuous monitoring mode')
+        'watch', help='Continuous monitoring mode')
     watch_parser.add_argument('--interval', type=int,
-                              default=5, help='Sync interval in minutes')
+                              default=60, help='Sync interval in minutes')
+    watch_parser.add_argument(
+        '--daemon', action='store_true', help='Run as background service')
 
     # List command
-    subparsers.add_parser(
-        'list', parents=[common_parser], help='List all replications')
+    subparsers.add_parser('list', help='List all replications')
 
     # Remove command
     remove_parser = subparsers.add_parser(
-        'remove', parents=[common_parser], help='Remove a replication')
+        'remove', help='Remove a replication')
     remove_parser.add_argument('source_path', help='Source path to remove')
 
     # Status command
     status_parser = subparsers.add_parser(
-        'status', parents=[common_parser], help='Check replication status')
+        'status', help='Check replication status')
     status_parser.add_argument(
         'source_path', nargs='?', help='Specific source to check')
 
     # Logs command
-    logs_parser = subparsers.add_parser(
-        'logs', parents=[common_parser], help='View logs')
+    logs_parser = subparsers.add_parser('logs', help='View logs')
     logs_parser.add_argument('--tail', type=int, help='Show last N lines')
     logs_parser.add_argument(
         '--clear', action='store_true', help='Clear log file')
 
     # Config command
     config_parser = subparsers.add_parser(
-        'config', parents=[common_parser], help='Configuration management')
+        'config', help='Configuration management')
     config_subparsers = config_parser.add_subparsers(
         dest='config_command', required=True)
-
     config_set = config_subparsers.add_parser(
-        'set', parents=[common_parser], help='Set configuration value')
+        'set', help='Set configuration value')
     config_set.add_argument(
         'option', help='Option to set (sync_interval/log_level/max_log_size)')
     config_set.add_argument('value', help='Value to set')
+    config_subparsers.add_parser('show', help='Show current configuration')
 
-    config_subparsers.add_parser(
-        'show', parents=[common_parser], help='Show current configuration')
-
-    # NEW: Service command for Windows
+    # Windows Service command - Only add on Windows systems
     if platform.system() == 'Windows':
         service_parser = subparsers.add_parser(
             'service', help='Windows service management')
@@ -295,42 +296,79 @@ def main():
                     logger.error(f"Error reading logs: {str(e)}")
 
         elif args.command == 'service' and platform.system() == 'Windows':
+            if not hasattr(args, 'action'):
+                logger.error("Service action not specified")
+                return 1
+
+            try:
+                import win32serviceutil
+            except ImportError:
+                logger.error("pywin32 package required for service management")
+                logger.info("Install with: pip install pywin32")
+                return 1
+
             service = ServiceManager()
+            service_name = "FolderReplicatorService"
+
             if args.action == 'install':
                 logger.info("Installing Windows service...")
-            elif args.action == 'start':
-                service.run_as_service()
-            elif args.action == 'stop':
-                service.stop()
-            elif args.action == 'restart':
-                service.stop()
-                service.run_as_service()
+                if not is_admin():
+                    logger.error(
+                        "Service installation requires administrator privileges")
+                    return 1
 
-        elif args.command == 'service' and platform.system() == 'Windows':
-            service = ServiceManager()
-        if args.action == 'install':
-            logger.info("Installing Windows service...")
-            # This would require pywin32 and proper service installation
-            # Need to run with admin privileges
-            if not is_admin():
-                logger.error(
-                    "Service installation requires administrator privileges")
-                return 1
-            service.run_as_service()
-        elif args.action == 'uninstall':
-            logger.info("Uninstalling Windows service...")
-            if not is_admin():
-                logger.error(
-                    "Service uninstallation requires administrator privileges")
-                return 1
-            service.uninstall_windows_service()
-        elif args.action == 'start':
-            service.run_as_service()
-        elif args.action == 'stop':
-            service.stop()
-        elif args.action == 'restart':
-            service.stop()
-            service.run_as_service()
+                try:
+                    # Get the path to the current Python interpreter
+                    python_exe = sys.executable
+                    # Get the path to the script
+                    script_path = os.path.abspath(__file__)
+                    # Create the service
+                    win32serviceutil.HandleCommandLine(
+                        ServiceManager,
+                        argv=['--startup', 'auto', 'install']
+                    )
+                    logger.info("Service installed successfully")
+                except Exception as e:
+                    logger.error(f"Failed to install service: {e}")
+                    return 1
+
+            elif args.action == 'uninstall':
+                logger.info("Uninstalling Windows service...")
+                if not is_admin():
+                    logger.error(
+                        "Service uninstallation requires administrator privileges")
+                    return 1
+
+                try:
+                    win32serviceutil.HandleCommandLine(
+                        ServiceManager,
+                        argv=['remove']
+                    )
+                    logger.info("Service uninstalled successfully")
+                except Exception as e:
+                    logger.error(f"Failed to uninstall service: {e}")
+                    return 1
+
+            elif args.action == 'start':
+                try:
+                    win32serviceutil.StartService(service_name)
+                    logger.info("Service started successfully")
+                except Exception as e:
+                    logger.error(f"Failed to start service: {e}")
+
+            elif args.action == 'stop':
+                try:
+                    win32serviceutil.StopService(service_name)
+                    logger.info("Service stopped successfully")
+                except Exception as e:
+                    logger.error(f"Failed to stop service: {e}")
+
+            elif args.action == 'restart':
+                try:
+                    win32serviceutil.RestartService(service_name)
+                    logger.info("Service restarted successfully")
+                except Exception as e:
+                    logger.error(f"Failed to restart service: {e}")
 
     except Exception as e:
         if logger:
