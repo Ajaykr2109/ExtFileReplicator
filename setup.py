@@ -1,4 +1,10 @@
 from setuptools import setup, find_packages
+import io
+import os
+
+here = os.path.abspath(os.path.dirname(__file__))
+with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name="folder-replicator",
@@ -17,8 +23,8 @@ setup(
 
     author="ajay2109",
     description="Folder replication tool with VCS-like capabilities",
-    long_description=open('README.md').read(),
-    long_description_content_type="text/markdown",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url="https://github.com/Ajaykr2109/ExtFileReplicator",
     classifiers=[
         "Programming Language :: Python :: 3",
