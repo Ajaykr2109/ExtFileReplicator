@@ -6,6 +6,7 @@ from folder_replicator.logger import setup_logger
 from folder_replicator.service_manager import ServiceManager
 
 
+
 __all__ = [
     'ConfigManager',
     'Synchronizer',

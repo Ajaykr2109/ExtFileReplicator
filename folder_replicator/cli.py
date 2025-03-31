@@ -1,13 +1,18 @@
 import argparse
 import sys
 from pathlib import Path
+
 import platform
 import os
+
 from folder_replicator.config_manager import ConfigManager
 from folder_replicator.synchronization import Synchronizer
 from folder_replicator.watcher import ReplicationWatcher
 from folder_replicator.logger import setup_logger
+
 from folder_replicator.service_manager import ServiceManager
+
+
 
 
 def main():

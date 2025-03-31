@@ -16,6 +16,7 @@ A lightweight yet powerful folder synchronization tool with version control-like
 
 ### Requirements
 
+- Git 
 - Python 3.6+
 - pip package manager
 
