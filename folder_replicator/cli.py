@@ -8,7 +8,6 @@ from .logger import setup_logger
 
 
 def main():
-
     config_manager = ConfigManager()
     logger = setup_logger(config_manager)
     parser = argparse.ArgumentParser(description='Folder Replication Tool')
