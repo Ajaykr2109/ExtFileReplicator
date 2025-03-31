@@ -2,11 +2,11 @@ import argparse
 import sys
 from pathlib import Path
 import platform
-from .config_manager import ConfigManager
-from .synchronization import Synchronizer
-from .watcher import ReplicationWatcher
-from .logger import setup_logger
-from .service_manager import ServiceManager
+from folder_replicator.config_manager import ConfigManager
+from folder_replicator.synchronization import Synchronizer
+from folder_replicator.watcher import ReplicationWatcher
+from folder_replicator.logger import setup_logger
+from folder_replicator.service_manager import ServiceManager
 
 
 def main():
@@ -87,7 +87,9 @@ def main():
     if platform.system() == 'Windows':
         service_parser = subparsers.add_parser(
             'service', help='Windows service management')
-        service_parser.add_argument('action', choices=['install', 'start', 'stop', 'restart'],
+        service_parser.add_argument('action',
+                                    choices=['install', 'uninstall',
+                                             'start', 'stop', 'restart'],
                                     help='Service action to perform')
 
     args = parser.parse_args()
@@ -303,6 +305,33 @@ def main():
             elif args.action == 'restart':
                 service.stop()
                 service.run_as_service()
+
+        elif args.command == 'service' and platform.system() == 'Windows':
+            service = ServiceManager()
+        if args.action == 'install':
+            logger.info("Installing Windows service...")
+            # This would require pywin32 and proper service installation
+            # Need to run with admin privileges
+            if not is_admin():
+                logger.error(
+                    "Service installation requires administrator privileges")
+                return 1
+            service.run_as_service()
+        elif args.action == 'uninstall':
+            logger.info("Uninstalling Windows service...")
+            if not is_admin():
+                logger.error(
+                    "Service uninstallation requires administrator privileges")
+                return 1
+            service.uninstall_windows_service()
+        elif args.action == 'start':
+            service.run_as_service()
+        elif args.action == 'stop':
+            service.stop()
+        elif args.action == 'restart':
+            service.stop()
+            service.run_as_service()
+
     except Exception as e:
         if logger:
             logger.error(f"Error: {str(e)}", exc_info=True)
@@ -313,3 +342,12 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+def is_admin():
+    """Check if running with administrator privileges"""
+    try:
+        import ctypes
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False

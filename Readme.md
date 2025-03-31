@@ -77,6 +77,22 @@ frep sync
 
 ```bash
 frep watch --interval 5  # Syncs every 5 mins
+# Normal foreground mode (existing behavior)
+frep watch --interval 1
+
+# Background service mode (new)
+frep watch --interval 1 --daemon
+
+# Windows service management (new)
+frep service install  # Requires admin
+frep service start
+frep service stop
+frep service uninstall
+```
+
+```
+# Confirm with this command
+sc query FolderReplicatorService
 ```
 
 3. **Troubleshooting**
