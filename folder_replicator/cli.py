@@ -1,10 +1,12 @@
 import argparse
 import sys
 from pathlib import Path
+import platform
 from .config_manager import ConfigManager
 from .synchronization import Synchronizer
 from .watcher import ReplicationWatcher
 from .logger import setup_logger
+from .service_manager import ServiceManager
 
 
 def main():
@@ -12,66 +14,81 @@ def main():
     logger = setup_logger(config_manager)
     parser = argparse.ArgumentParser(description='Folder Replication Tool')
     subparsers = parser.add_subparsers(dest='command', required=True)
-    parser.add_argument('--verbose', action='store_true',
-                        help='Verbose output')
-    parser.add_argument('--quiet', action='store_true',
-                        help='Only show errors')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='Simulation mode')
-    parser.add_argument('--force', action='store_true',
-                        help='Skip confirmations')
 
+    # Common arguments
+    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser.add_argument(
+        '--verbose', action='store_true', help='Verbose output')
+    common_parser.add_argument(
+        '--quiet', action='store_true', help='Only show errors')
+    common_parser.add_argument(
+        '--dry-run', action='store_true', help='Simulation mode')
+    common_parser.add_argument(
+        '--force', action='store_true', help='Skip confirmations')
+    common_parser.add_argument('--daemon', action='store_true',
+                               help='Run as background service')
+
+    # Add command
     add_parser = subparsers.add_parser(
-        'add', help='Add a new replication pair')
+        'add', parents=[common_parser], help='Add a new replication pair')
     add_parser.add_argument('source', help='Source directory path')
     add_parser.add_argument('destination', help='Destination directory path')
     add_parser.add_argument('--exclude', nargs='*',
                             default=[], help='File patterns to exclude')
 
-    sync_parser = subparsers.add_parser('sync', help='Run synchronization')
+    # Sync command
+    sync_parser = subparsers.add_parser(
+        'sync', parents=[common_parser], help='Run synchronization')
 
+    # Watch command - MODIFIED to support service mode
     watch_parser = subparsers.add_parser(
-        'watch', help='Continuous monitoring mode')
+        'watch', parents=[common_parser], help='Continuous monitoring mode')
     watch_parser.add_argument('--interval', type=int,
-                              default=60, help='Sync interval in minutes')
+                              default=5, help='Sync interval in minutes')
 
-    subparsers.add_parser('list', help='List all replications')
+    # List command
+    subparsers.add_parser(
+        'list', parents=[common_parser], help='List all replications')
 
+    # Remove command
     remove_parser = subparsers.add_parser(
-        'remove', help='Remove a replication')
+        'remove', parents=[common_parser], help='Remove a replication')
     remove_parser.add_argument('source_path', help='Source path to remove')
 
+    # Status command
     status_parser = subparsers.add_parser(
-        'status', help='Check replication status')
+        'status', parents=[common_parser], help='Check replication status')
     status_parser.add_argument(
         'source_path', nargs='?', help='Specific source to check')
 
-    logs_parser = subparsers.add_parser('logs', help='View logs')
+    # Logs command
+    logs_parser = subparsers.add_parser(
+        'logs', parents=[common_parser], help='View logs')
     logs_parser.add_argument('--tail', type=int, help='Show last N lines')
     logs_parser.add_argument(
         '--clear', action='store_true', help='Clear log file')
 
+    # Config command
     config_parser = subparsers.add_parser(
-        'config', help='Configuration management')
+        'config', parents=[common_parser], help='Configuration management')
     config_subparsers = config_parser.add_subparsers(
         dest='config_command', required=True)
 
     config_set = config_subparsers.add_parser(
-        'set', help='Set configuration value')
+        'set', parents=[common_parser], help='Set configuration value')
     config_set.add_argument(
         'option', help='Option to set (sync_interval/log_level/max_log_size)')
     config_set.add_argument('value', help='Value to set')
 
     config_subparsers.add_parser(
-        'show', help='Show current configuration')
+        'show', parents=[common_parser], help='Show current configuration')
 
-    for p in [add_parser, sync_parser, watch_parser, remove_parser, status_parser, logs_parser, config_set]:
-        p.add_argument('--verbose', action='store_true', help='Verbose output')
-        p.add_argument('--quiet', action='store_true', help='Only show errors')
-        p.add_argument('--dry-run', action='store_true',
-                       help='Simulation mode')
-        p.add_argument('--force', action='store_true',
-                       help='Skip confirmations')
+    # NEW: Service command for Windows
+    if platform.system() == 'Windows':
+        service_parser = subparsers.add_parser(
+            'service', help='Windows service management')
+        service_parser.add_argument('action', choices=['install', 'start', 'stop', 'restart'],
+                                    help='Service action to perform')
 
     args = parser.parse_args()
 
@@ -98,8 +115,18 @@ def main():
             logger.info(
                 f"Starting watch mode (interval: {args.interval} minutes)")
             if not args.dry_run:
-                watcher = ReplicationWatcher(sync, args.interval)
-                watcher.watch()
+                if args.daemon:
+                    service = ServiceManager(args.interval)
+                    if platform.system() == 'Windows' and hasattr(args, 'action'):
+                        # Handle Windows service commands
+                        if args.action == 'install':
+                            logger.info("Installing Windows service...")
+                        service.run_as_service()
+                    else:
+                        service.run_as_service()
+                else:
+                    watcher = ReplicationWatcher(sync, args.interval)
+                    watcher.watch()
 
         elif args.command == 'list':
             for rep in config.get_replications():
@@ -111,6 +138,7 @@ def main():
                     logger.info("Replication removed")
                 else:
                     logger.error("Replication not found")
+
         elif args.command == 'status':
             replications = config.get_replications()
 
@@ -263,6 +291,18 @@ def main():
                     logger.error("Log file not found")
                 except Exception as e:
                     logger.error(f"Error reading logs: {str(e)}")
+
+        elif args.command == 'service' and platform.system() == 'Windows':
+            service = ServiceManager()
+            if args.action == 'install':
+                logger.info("Installing Windows service...")
+            elif args.action == 'start':
+                service.run_as_service()
+            elif args.action == 'stop':
+                service.stop()
+            elif args.action == 'restart':
+                service.stop()
+                service.run_as_service()
     except Exception as e:
         if logger:
             logger.error(f"Error: {str(e)}", exc_info=True)

@@ -3,16 +3,19 @@ import sys
 import time
 import logging
 import platform
-from threading import Event
-from .watcher import ReplicationWatcher
+import threading
+from pathlib import Path
 from .config_manager import ConfigManager
 from .synchronization import Synchronizer
+from .watcher import ReplicationWatcher
+
+logger = logging.getLogger("FolderReplicator")
 
 
 class ServiceManager:
-    def __init__(self, interval_minutes=1):
-        self.interval = interval_minutes * 60
-        self.stop_event = Event()
+    def __init__(self, interval_minutes=60):
+        self.interval = interval_minutes
+        self.stop_event = threading.Event()
         self.config_manager = ConfigManager()
         self.synchronizer = Synchronizer(self.config_manager)
         self.setup_logging()
@@ -25,34 +28,27 @@ class ServiceManager:
 
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.FileHandler(log_file),
                 logging.StreamHandler()
             ]
         )
-        self.logger = logging.getLogger('frep_service')
 
-    def run(self):
-        """Main service loop"""
-        self.logger.info("Starting Folder Replicator service")
-
+    def run_as_service(self):
+        """Run as a background service/daemon"""
         try:
-            self.synchronizer.sync_all()
-            watcher = ReplicationWatcher(self.synchronizer)
-
             if platform.system() == 'Windows':
-                self._windows_service_loop(watcher)
+                self._run_windows_service()
             else:
-                self._unix_service_loop(watcher)
-
+                self._run_unix_daemon()
         except Exception as e:
-            self.logger.error(f"Service error: {e}", exc_info=True)
+            logger.error(f"Service error: {e}", exc_info=True)
         finally:
-            self.logger.info("Service stopped")
+            logger.info("Service stopped")
 
-    def _windows_service_loop(self, watcher):
-        """Windows-specific service loop"""
+    def _run_windows_service(self):
+        """Windows service implementation"""
         try:
             import win32serviceutil
             import win32service
@@ -70,24 +66,23 @@ class ServiceManager:
 
                 def SvcStop(self):
                     self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-                    self.service_manager.stop_event.set()
+                    self.service_manager.stop()
                     win32event.SetEvent(self.hWaitStop)
 
                 def SvcDoCommand(self):
-                    self.service_manager.run()
+                    self.service_manager._run_watcher()
 
-            if len(sys.argv) > 1 and sys.argv[1] == '--install':
+            if '--install' in sys.argv:
                 win32serviceutil.HandleCommandLine(FRService)
             else:
-                watcher.watch()
+                self._run_watcher()
 
         except ImportError:
-            self.logger.warning(
-                "pywin32 not installed, running in simple mode")
-            watcher.watch()
+            logger.warning("pywin32 not installed, running in simple mode")
+            self._run_watcher()
 
-    def _unix_service_loop(self, watcher):
-        """Unix-like system service loop"""
+    def _run_unix_daemon(self):
+        """Unix daemon implementation"""
         try:
             import daemon
             from daemon.pidfile import TimeoutPIDLockFile
@@ -100,17 +95,36 @@ class ServiceManager:
                 pidfile=TimeoutPIDLockFile(pid_file),
                 stdout=sys.stdout,
                 stderr=sys.stderr,
-                working_directory=os.getcwd()
+                working_directory=os.getcwd(),
+                files_preserve=[
+                    handler.stream for handler in logging.root.handlers]
             )
 
             with context:
-                watcher.watch()
+                self._run_watcher()
 
         except ImportError:
-            self.logger.warning(
+            logger.warning(
                 "python-daemon not installed, running in simple mode")
+            self._run_watcher()
+
+    def _run_watcher(self):
+        """Start the watcher with existing ReplicationWatcher class"""
+        watcher = ReplicationWatcher(self.synchronizer, self.interval)
+        try:
             watcher.watch()
+        except KeyboardInterrupt:
+            watcher.stop()
+        except Exception as e:
+            logger.error(f"Watcher error: {e}", exc_info=True)
+            watcher.stop()
 
     def stop(self):
         """Stop the service"""
         self.stop_event.set()
+        logger.info("Service stop requested")
+
+
+if __name__ == "__main__":
+    service = ServiceManager()
+    service.run_as_service()

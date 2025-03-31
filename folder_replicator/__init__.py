@@ -3,6 +3,7 @@ from .synchronization import Synchronizer
 from .watcher import ReplicationWatcher
 from .cli import main
 from .logger import setup_logger
+from .service_manager import ServiceManager
 
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     'ReplicationWatcher',
     'main',
     'setup_logger',
+    'ServiceManager'
 
 ]
