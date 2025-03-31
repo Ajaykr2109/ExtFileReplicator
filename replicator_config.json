@@ -3,7 +3,13 @@
     {
       "source": "E:\\others",
       "destination": "E:\\others1",
-      "last_sync": 1743431000.542935,
+      "last_sync": 1743451227.383201,
+      "exclusions": []
+    },
+    {
+      "source": "E:\\others",
+      "destination": "E:\\others1",
+      "last_sync": 1743451227.4722185,
       "exclusions": []
     }
   ],

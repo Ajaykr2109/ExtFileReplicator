@@ -5,9 +5,9 @@ import logging
 import platform
 import threading
 from pathlib import Path
-from .config_manager import ConfigManager
-from .synchronization import Synchronizer
-from .watcher import ReplicationWatcher
+from folder_replicator.config_manager import ConfigManager
+from folder_replicator.synchronization import Synchronizer
+from folder_replicator.watcher import ReplicationWatcher
 
 logger = logging.getLogger("FolderReplicator")
 
@@ -74,12 +74,25 @@ class ServiceManager:
 
             if '--install' in sys.argv:
                 win32serviceutil.HandleCommandLine(FRService)
+            elif '--uninstall' in sys.argv:
+                win32serviceutil.HandleCommandLine(FRService)
             else:
                 self._run_watcher()
 
         except ImportError:
             logger.warning("pywin32 not installed, running in simple mode")
             self._run_watcher()
+
+    def uninstall_windows_service(self):
+        """Uninstall the Windows service"""
+        try:
+            import win32serviceutil
+            win32serviceutil.RemoveService("FolderReplicatorService")
+            logger.info("Windows service uninstalled successfully")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to uninstall service: {e}")
+            return False
 
     def _run_unix_daemon(self):
         """Unix daemon implementation"""

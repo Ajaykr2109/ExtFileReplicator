@@ -86,7 +86,7 @@ frep sync
 2. **Continuous Monitoring**
 
 ```bash
-frep watch --interval 60  # Syncs every hour
+frep watch --interval 5  # Syncs every 5 mins
 ```
 
 3. **Troubleshooting**

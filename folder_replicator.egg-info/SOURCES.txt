@@ -6,6 +6,7 @@ folder_replicator/cli.py
 folder_replicator/config_manager.py
 folder_replicator/file_operations.py
 folder_replicator/logger.py
+folder_replicator/service_manager.py
 folder_replicator/synchronization.py
 folder_replicator/watcher.py
 folder_replicator.egg-info/PKG-INFO
