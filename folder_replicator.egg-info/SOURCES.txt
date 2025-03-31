@@ -1,3 +1,5 @@
+README.md
+setup.cfg
 setup.py
 folder_replicator/__init__.py
 folder_replicator/cli.py

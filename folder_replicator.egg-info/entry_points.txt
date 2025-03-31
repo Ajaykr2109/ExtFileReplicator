@@ -1,3 +1,2 @@
 [console_scripts]
-folder-replicate = folder_replicator.cli:main
 frep = folder_replicator.cli:main
