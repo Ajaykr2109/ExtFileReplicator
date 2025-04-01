@@ -1,12 +1,1 @@
-{
-  "replications": [
-    {
-      "source": "E:\\others",
-      "destination": "E:\\others1",
-      "last_sync": 1743431000.542935,
-      "exclusions": []
-    }
-  ],
-  "sync_interval": 1,
-  "max_log_size": 5.0
-}
+
