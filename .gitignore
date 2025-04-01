@@ -1,0 +1,17 @@
+# Exclude Python bytecode and cache directories
+__pycache__/
+*.py[cod]
+
+# Exclude egg-info directories (e.g. when using setuptools)
+/folder_replicator/__pycache__/
+/folder_replicator.egg-info/
+
+
+*.log
+
+
+.vscode/
+.idea/
+
+# Exclude any specific files or folders you want
+# /path/to/specific/folder/
