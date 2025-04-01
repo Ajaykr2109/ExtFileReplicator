@@ -10,6 +10,11 @@ __pycache__/
 *.log
 replicator_config.json
 
+build.spec
+setup.cfg
+version_info.py
+installer.nsi
+
 .vscode/
 .idea/
 
