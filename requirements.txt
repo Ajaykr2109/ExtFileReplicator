@@ -1,13 +1,12 @@
 altgraph==0.17.4
 daemon==1.2
--e git+https://github.com/Ajaykr2109/ExtFileReplicator.git@d16a6dd99aee7a5b5702c294d6bbf62b6ee5d92e#egg=folder_replicator
 lockfile==0.12.2
 packaging==24.2
 pefile==2023.2.7
 pyinstaller==6.12.0
 pyinstaller-hooks-contrib==2025.2
 python-daemon==3.1.2
-pywin32==310
+pywin32==310; sys_platform == 'win32'
 pywin32-ctypes==0.2.3
 setuptools==78.1.0
 watchdog==6.0.0
