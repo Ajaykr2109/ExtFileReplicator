@@ -14,6 +14,7 @@ build.spec
 setup.cfg
 version_info.py
 installer.nsi
+open-s.code-workspace
 
 .vscode/
 .idea/
