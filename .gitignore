@@ -56,7 +56,6 @@ venv.bak/
 # Project specific ignores
 replicator_config.json
 *.log
-build.spec
 version_info.py
 installer.nsi
 
