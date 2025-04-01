@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
 import os
 
-# Try to read README.md, but use a fallback if it doesn't exist
 try:
     with open("README.md", "r") as f:
         long_description = f.read()
