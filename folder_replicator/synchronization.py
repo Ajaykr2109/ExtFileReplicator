@@ -2,7 +2,7 @@ import os
 import time
 import logging
 import shutil
-from .file_operations import FileOperations
+from folder_replicator.file_operations import FileOperations
 
 logger = logging.getLogger("FolderReplicator")
 
