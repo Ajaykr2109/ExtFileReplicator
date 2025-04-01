@@ -1,4 +1,12 @@
 from setuptools import setup, find_packages
+import os
+
+# Try to read README.md, but use a fallback if it doesn't exist
+try:
+    with open("README.md", "r") as f:
+        long_description = f.read()
+except FileNotFoundError:
+    long_description = "A CLI-based folder replication and synchronization tool."
 
 setup(
     name="ext_folder_replicator",
@@ -6,7 +14,7 @@ setup(
     author="ajaykr2109_nowStack",
     author_email="chaturvedikraj2109@gmail.com",
     description="A CLI-based folder replication and synchronization tool.",
-    long_description=open("README.md").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Ajaykr2109/ExtFileReplicator",
     packages=find_packages(),
