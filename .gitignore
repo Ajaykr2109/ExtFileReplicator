@@ -1,21 +1,74 @@
-# Exclude Python bytecode and cache directories
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*$py.class
 
-# Exclude egg-info directories (e.g. when using setuptools)
-/folder_replicator/__pycache__/
-/folder_replicator.egg-info/
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdk/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+*.egg
+*.manifest
+*.spec
 
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
-*.log
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Project specific ignores
 replicator_config.json
-
+*.log
 build.spec
 version_info.py
 installer.nsi
 
-.vscode/
-.idea/
+# Debug files
+*.log
+*.pot
+*.pid
 
-# Exclude any specific files or folders you want
-# /path/to/specific/folder/
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
