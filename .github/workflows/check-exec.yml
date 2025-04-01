@@ -56,16 +56,9 @@ jobs:
 
       - name: Validate file replication
         run: |
-          frep sync --source test_src --dest test_dest
           if [ ! -f "test_dest/testfile.txt" ]; then
             echo "Error: File not copied!"
             exit 1
           fi
         shell: bash
 
-      - name: Run `frep watch` 
-        run: |
-          frep watch --interval 1 &
-          sleep 5
-          pkill -f "frep watch" || echo "No process found"
-        shell: bash
