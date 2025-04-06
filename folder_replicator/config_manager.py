@@ -55,6 +55,14 @@ class ConfigManager:
                 raise FileNotFoundError(
                     f"Source folder does not exist: {source}")
 
+            for replication in self.config['replications']:
+                if replication['source'] == source:
+                    raise ValueError(
+                        f"Replication with the source already exists: {source} | use 'frep list' to see all replications")
+                if replication['source'] == destination and replication['destination'] == source:
+                    raise ValueError(
+                        f"Replication with destination as source and source as destination already exists: {destination} -> {source} | use 'frep list' to see all replications")
+
             replication = {
                 'source': source,
                 'destination': destination,
@@ -76,7 +84,8 @@ class ConfigManager:
         """Update last sync time for a replication"""
         try:
             if 0 <= replication_index < len(self.config['replications']):
-                self.config['replications'][replication_index]['last_sync'] = timestamp
+                self.config['replications'][replication_index]['last_sync'] = datetime.fromtimestamp(
+                    timestamp).strftime('%Y-%m-%d %H:%M:%S')
                 return self.save_config()
             return False
         except Exception as e:
