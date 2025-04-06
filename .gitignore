@@ -23,6 +23,8 @@ share/python-wheels/
 *.egg
 *.manifest
 *.spec
+ext_folder_replicator.egg-info
+
 
 # Installer logs
 pip-log.txt
