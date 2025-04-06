@@ -16,7 +16,7 @@ A lightweight yet powerful folder synchronization tool with version control-like
 
 ### Requirements
 
-- Git 
+- Git
 - Python 3.6+
 - pip package manager
 
@@ -25,6 +25,11 @@ A lightweight yet powerful folder synchronization tool with version control-like
 ```bash
 pip install git+https://github.com/Ajaykr2109/ExtFileReplicator
 ```
+
+#### For Linux based systems
+
+      1. First create python virtual environment then copy paste the Quick Install command provided above.
+      2. Then you need to use that created vEnv of the python for further use.
 
 ### Development Install
 
