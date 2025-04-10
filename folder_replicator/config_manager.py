@@ -87,8 +87,18 @@ class ConfigManager:
             return False
 
     def remove_replication(self, source_path):
+        settings = {
+            'sync_interval': self.config.get('sync_interval'),
+            'log_level': self.config.get('log_level'),
+            'max_log_size': self.config.get('max_log_size')
+        }
+
         self.config['replications'] = [r for r in self.config['replications']
                                        if r['source'] != source_path]
+
+        self.config.update(
+            {k: v for k, v in settings.items() if v is not None})
+
         return self.save_config()
 
     def set_config(self, option, value):
