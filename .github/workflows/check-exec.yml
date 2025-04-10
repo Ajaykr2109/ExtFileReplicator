@@ -133,6 +133,8 @@ jobs:
       - name: Test remove command
         run: |
           frep remove test_src2 --force || (echo "Remove command failed" && exit 1)
+          sleep 1  # Add a small delay to ensure config file is updated
+
           frep list | grep -q "test_src2" && (echo "Replication still exists after removal" && exit 1)
 
           echo "Final test" > test_src/finaltest.txt
