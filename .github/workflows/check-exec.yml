@@ -83,14 +83,14 @@ jobs:
       - name: Test status command
         run: |
           frep status || (echo "Status command failed" && exit 1)
-
+      
           STATUS_OUTPUT=$(frep status test_src)
-          echo "$STATUS_OUTPUT" | grep -q "Source files:" || (echo "Status output missing source files count" && exit 1)
-          echo "$STATUS_OUTPUT" | grep -E "Source files: *4" || (echo "Incorrect source files count" && exit 1)
-
+          echo "$STATUS_OUTPUT" | grep -q "Files synced: 4/4" || (echo "Incorrect synced files for test_src" && exit 1)
+      
           STATUS_OUTPUT2=$(frep status test_src2)
-          echo "$STATUS_OUTPUT2" | grep -E "Source files: *1" || (echo "Incorrect source files count for second replication" && exit 1)
+          echo "$STATUS_OUTPUT2" | grep -q "Files synced: 1/1" || (echo "Incorrect synced files for test_src2" && exit 1)
         shell: bash
+
 
       - name: Test watch command
         run: |
