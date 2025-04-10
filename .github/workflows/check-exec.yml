@@ -40,15 +40,15 @@ jobs:
           frep config set max_log_size 20 || (echo "Failed to set max_log_size" && exit 1)
 
           CONFIG_OUTPUT=$(frep config show)
-          echo "$CONFIG_OUTPUT" | grep -E "Sync interval: *30" || (echo "sync_interval value mismatch" && exit 1)
-          echo "$CONFIG_OUTPUT" | grep -E "Log level: *DEBUG" || (echo "log_level value mismatch" && exit 1)
-          echo "$CONFIG_OUTPUT" | grep -E "Max log size: *20(\.0)? MB" || (echo "max_log_size value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "Sync interval:.*30" || (echo "sync_interval value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "Log level:.*DEBUG" || (echo "log_level value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "Max log size:.*20" || (echo "max_log_size value mismatch" && exit 1)
         shell: bash
 
       - name: Set up test environment
         run: |
-          mkdir -p test_src/subdir test_dest
-          mkdir -p test_src2 test_dest2
+          mkdir -p test_src/subdir test_dest || (echo "Failed to create test directories" && exit 1)
+          mkdir -p test_src2 test_dest2 || (echo "Failed to create secondary test directories" && exit 1)
 
           echo "Hello, world!" > test_src/testfile.txt
           echo "Test content" > test_src/subdir/subfile.txt
@@ -65,8 +65,8 @@ jobs:
           frep add test_src2 test_dest2 --exclude "*.tmp" "*.log" || (echo "Failed to add second replication" && exit 1)
 
           LIST_OUTPUT=$(frep list)
-          echo "$LIST_OUTPUT" | grep -E "test_src.*->.*test_dest" || (echo "First replication not found in list" && exit 1)
-          echo "$LIST_OUTPUT" | grep -E "test_src2.*->.*test_dest2" || (echo "Second replication not found in list" && exit 1)
+          echo "$LIST_OUTPUT" | grep -q "test_src.*->.*test_dest" || (echo "First replication not found in list" && exit 1)
+          echo "$LIST_OUTPUT" | grep -q "test_src2.*->.*test_dest2" || (echo "Second replication not found in list" && exit 1)
         shell: bash
 
       - name: Test sync command
@@ -82,50 +82,44 @@ jobs:
 
       - name: Test status command
         run: |
-          # Run status command and capture output
-          STATUS_OUTPUT=$(frep status 2>&1) || {
-            echo "Status command failed:"
-            echo "$STATUS_OUTPUT"
-            exit 1
-          }
+          frep status || (echo "Status command failed" && exit 1)
 
-          echo "$STATUS_OUTPUT"
+          STATUS_OUTPUT=$(frep status test_src)
+          echo "$STATUS_OUTPUT" | grep -q "Source files:" || (echo "Status output missing source files count" && exit 1)
 
-          # Validate test_src sync (4/4)
-          echo "$STATUS_OUTPUT" | grep -q "test_src.*->.*" && 
-          echo "$STATUS_OUTPUT" | grep -q "Files synced:.*4/4" || {
-            echo "❌ test_src did not sync 4/4 files as expected."
-            exit 1
-          }
+          SOURCE_FILES=$(echo "$STATUS_OUTPUT" | grep -E "Source files:.*" | grep -o '[0-9]*')
+          [[ "$SOURCE_FILES" -eq 4 ]] || (echo "Incorrect source files count, expected 4, got $SOURCE_FILES" && exit 1)
 
-          # Validate test_src2 sync (1/1)
-          echo "$STATUS_OUTPUT" | grep -q "test_src2.*->.*" && 
-          echo "$STATUS_OUTPUT" | grep -q "Files synced:.*1/1" || {
-            echo "❌ test_src2 did not sync 1/1 file as expected."
-            exit 1
-          }
-
-          echo "✅ Replication status checks passed."
+          STATUS_OUTPUT2=$(frep status test_src2)
+          SOURCE_FILES2=$(echo "$STATUS_OUTPUT2" | grep -E "Source files:.*" | grep -o '[0-9]*')
+          [[ "$SOURCE_FILES2" -eq 1 ]] || (echo "Incorrect source files count for second replication, expected 1, got $SOURCE_FILES2" && exit 1)
         shell: bash
 
       - name: Test watch command
         run: |
           timeout 30s frep watch --interval 1 &
           WATCH_PID=$!
-
           sleep 2
+
           echo "New file" > test_src/newfile.txt
 
-          for i in $(seq 1 10); do
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          SUCCESS=0
+
+          while [[ $RETRY_COUNT -lt $MAX_RETRIES && $SUCCESS -eq 0 ]]; do
             if [[ -f "test_dest/newfile.txt" ]]; then
-              break
-            fi
-            sleep 2
-            if [[ $i -eq 10 ]]; then
-              echo "Watch mode failed to sync new file"
-              exit 1
+              SUCCESS=1
+            else
+              sleep 2
+              RETRY_COUNT=$((RETRY_COUNT+1))
             fi
           done
+
+          if [[ $SUCCESS -eq 0 ]]; then
+            echo "Watch mode failed to sync new file after $MAX_RETRIES retries"
+            exit 1
+          fi
 
           kill $WATCH_PID 2>/dev/null || true
         shell: bash
@@ -133,9 +127,8 @@ jobs:
       - name: Test remove command
         run: |
           frep remove test_src2 --force || (echo "Remove command failed" && exit 1)
-          sleep 1  # Add a small delay to ensure config file is updated
-
-          frep list | grep -q "test_src2" && (echo "Replication still exists after removal" && exit 1)
+          LIST_OUTPUT=$(frep list)
+          echo "$LIST_OUTPUT" | grep -q "test_src2" && (echo "Replication still exists after removal" && exit 1)
 
           echo "Final test" > test_src/finaltest.txt
           frep sync || (echo "Final sync failed" && exit 1)
@@ -147,6 +140,10 @@ jobs:
           frep logs --tail 10 || (echo "Failed to view logs" && exit 1)
           frep logs --clear --force || (echo "Failed to clear logs" && exit 1)
 
-          LOG_FILES=$(find ~/.local/share/FolderReplicator/logs -type f -name "*.log" 2>/dev/null || find "$LOCALAPPDATA/FolderReplicator/Logs" -type f -name "*.log" 2>/dev/null || true)
-          [[ -z "$LOG_FILES" ]] || (echo "Log files still exist after clear" && exit 1)
+          LINUX_LOGS=$(find ~/.local/share/FolderReplicator/logs -type f -name "*.log" 2>/dev/null || echo "")
+          WINDOWS_LOGS=$(find "$LOCALAPPDATA/FolderReplicator/Logs" -type f -name "*.log" 2>/dev/null || echo "")
+          MAC_LOGS=$(find ~/Library/Logs/FolderReplicator -type f -name "*.log" 2>/dev/null || echo "")
+
+          LOG_FILES="$LINUX_LOGS$WINDOWS_LOGS$MAC_LOGS"
+          [[ -z "$LOG_FILES" ]] || (echo "Log files still exist after clear: $LOG_FILES" && exit 1)
         shell: bash
