@@ -82,18 +82,30 @@ jobs:
 
       - name: Test status command
         run: |
-          frep status || (echo "Status command failed" && exit 1)
+          # Run status command and capture output
+          STATUS_OUTPUT=$(frep status 2>&1) || {
+            echo "Status command failed:"
+            echo "$STATUS_OUTPUT"
+            exit 1
+          }
       
-          # Capture and validate file counts for test_src
-          STATUS_OUTPUT=$(frep status test_src)
-          SRC_SYNCED=$(echo "$STATUS_OUTPUT" | grep -Eo "Files synced: *[0-9]+/[0-9]+" | head -n 1)
-          [[ "$SRC_SYNCED" == "Files synced: 4/4" ]] || (echo "Expected 4/4 synced for test_src but got '$SRC_SYNCED'" && exit 1)
+          echo "$STATUS_OUTPUT"
       
-          # Capture and validate file counts for test_src2
-          STATUS_OUTPUT2=$(frep status test_src2)
-          SRC2_SYNCED=$(echo "$STATUS_OUTPUT2" | grep -Eo "Files synced: *[0-9]+/[0-9]+" | head -n 1)
-          [[ "$SRC2_SYNCED" == "Files synced: 1/1" ]] || (echo "Expected 1/1 synced for test_src2 but got '$SRC2_SYNCED'" && exit 1)
+          # Validate test_src sync (4/4)
+          echo "$STATUS_OUTPUT" | grep -P "/test_src\s*->.*\n\s*Last sync:.*\n\s*Files synced:\s*4/4" > /dev/null || {
+            echo "❌ test_src did not sync 4/4 files as expected."
+            exit 1
+          }
+      
+          # Validate test_src2 sync (1/1)
+          echo "$STATUS_OUTPUT" | grep -P "/test_src2\s*->.*\n\s*Last sync:.*\n\s*Files synced:\s*1/1" > /dev/null || {
+            echo "❌ test_src2 did not sync 1/1 file as expected."
+            exit 1
+          }
+      
+          echo "✅ Replication status checks passed."
         shell: bash
+
 
 
       - name: Test watch command
