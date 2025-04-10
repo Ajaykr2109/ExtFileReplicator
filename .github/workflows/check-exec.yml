@@ -43,9 +43,9 @@ jobs:
 
           # Verify each setting with detailed error messages
           CONFIG_OUTPUT=$(frep config show)
-          echo "$CONFIG_OUTPUT" | grep -E "sync_interval: *30" || (echo "sync_interval value mismatch" && exit 1)
-          echo "$CONFIG_OUTPUT" | grep -E "log_level: *DEBUG" || (echo "log_level value mismatch" && exit 1)
-          echo "$CONFIG_OUTPUT" | grep -E "max_log_size: *20" || (echo "max_log_size value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "Sync interval: *30 minutes" || (echo "sync_interval value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "Log level: *DEBUG" || (echo "log_level value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "Max log size: *20(\.0)? MB" || (echo "max_log_size value mismatch" && exit 1)
         shell: bash
 
       - name: Set up test environment
