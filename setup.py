@@ -17,7 +17,7 @@ except (IOError, FileNotFoundError):
 
 setup(
     name="ext_folder_replicator",
-    version=["version"],
+    version="1.1.1",
     author="ajaykr2109_nowStack",
     author_email="chaturvedikraj2109@gmail.com",
     description="A powerful folder synchronization tool",
