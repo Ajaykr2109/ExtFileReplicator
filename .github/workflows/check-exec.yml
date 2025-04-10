@@ -33,75 +33,120 @@ jobs:
 
       - name: Test configuration commands
         run: |
-          frep config show
-          frep config set sync_interval 30
-          frep config set log_level DEBUG
-          frep config set max_log_size 20
-          frep config show | grep -q "sync_interval: 30" || exit 1
-          frep config show | grep -q "log_level: DEBUG" || exit 1
-          frep config show | grep -q "max_log_size: 20" || exit 1
+          # Initialize config with default values first
+          frep config show || (echo "Failed to show initial config" && exit 1)
+
+          # Test each config command separately for better error tracking
+          frep config set sync_interval 30 || (echo "Failed to set sync_interval" && exit 1)
+          frep config set log_level DEBUG || (echo "Failed to set log_level" && exit 1)
+          frep config set max_log_size 20 || (echo "Failed to set max_log_size" && exit 1)
+
+          # Verify each setting with detailed error messages
+          CONFIG_OUTPUT=$(frep config show)
+          echo "$CONFIG_OUTPUT" | grep -E "sync_interval: *30" || (echo "sync_interval value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "log_level: *DEBUG" || (echo "log_level value mismatch" && exit 1)
+          echo "$CONFIG_OUTPUT" | grep -E "max_log_size: *20" || (echo "max_log_size value mismatch" && exit 1)
         shell: bash
 
       - name: Set up test environment
         run: |
-          mkdir -p test_src/subdir test_dest
-          mkdir -p test_src2 test_dest2
+          # Create test directories with error checking
+          mkdir -p test_src/subdir test_dest || (echo "Failed to create test directories" && exit 1)
+          mkdir -p test_src2 test_dest2 || (echo "Failed to create secondary test directories" && exit 1)
+
+          # Create test files with verification
           echo "Hello, world!" > test_src/testfile.txt
           echo "Test content" > test_src/subdir/subfile.txt
           echo "temp file" > test_src/temp.tmp
           echo "log file" > test_src/test.log
           echo "Second source" > test_src2/file2.txt
+
+          # Verify test files were created
+          [[ -f test_src/testfile.txt && -f test_src/subdir/subfile.txt && -f test_src/temp.tmp && -f test_src/test.log && -f test_src2/file2.txt ]] || (echo "Failed to create test files" && exit 1)
         shell: bash
 
       - name: Test add command
         run: |
-          frep add test_src test_dest
-          frep add test_src2 test_dest2 --exclude "*.tmp" "*.log"
-          frep list | grep -q "test_src -> test_dest" || exit 1
-          frep list | grep -q "test_src2 -> test_dest2" || exit 1
+          frep add test_src test_dest || (echo "Failed to add first replication" && exit 1)
+          frep add test_src2 test_dest2 --exclude "*.tmp" "*.log" || (echo "Failed to add second replication" && exit 1)
+
+          LIST_OUTPUT=$(frep list)
+          echo "$LIST_OUTPUT" | grep -q "test_src -> test_dest" || (echo "First replication not found in list" && exit 1)
+          echo "$LIST_OUTPUT" | grep -q "test_src2 -> test_dest2" || (echo "Second replication not found in list" && exit 1)
         shell: bash
 
       - name: Test sync command
         run: |
-          frep sync
-          test -f "test_dest/testfile.txt" || exit 1
-          test -f "test_dest/subdir/subfile.txt" || exit 1
-          test -f "test_dest2/file2.txt" || exit 1
-          test ! -f "test_dest2/temp.tmp" || exit 1
-          test ! -f "test_dest2/test.log" || exit 1
+          frep sync || (echo "Sync command failed" && exit 1)
+
+          # Check for presence and absence of files with descriptive errors
+          [[ -f "test_dest/testfile.txt" ]] || (echo "Missing testfile.txt in destination" && exit 1)
+          [[ -f "test_dest/subdir/subfile.txt" ]] || (echo "Missing subfile.txt in destination" && exit 1)
+          [[ -f "test_dest2/file2.txt" ]] || (echo "Missing file2.txt in destination 2" && exit 1)
+          [[ ! -f "test_dest2/temp.tmp" ]] || (echo "Excluded temp.tmp file found" && exit 1)
+          [[ ! -f "test_dest2/test.log" ]] || (echo "Excluded test.log file found" && exit 1)
         shell: bash
 
       - name: Test status command
         run: |
-          frep status
-          frep status test_src | grep -q "Source files:" || exit 1
-          frep status test_src | grep -q "Source files: 4" || exit 1
-          frep status test_src2 | grep -q "Source files: 1" || exit 1
+          frep status || (echo "Status command failed" && exit 1)
+
+          STATUS_OUTPUT=$(frep status test_src)
+          echo "$STATUS_OUTPUT" | grep -q "Source files:" || (echo "Status output missing source files count" && exit 1)
+          echo "$STATUS_OUTPUT" | grep -q "Source files: 4" || (echo "Incorrect source files count" && exit 1)
+
+          STATUS_OUTPUT2=$(frep status test_src2)
+          echo "$STATUS_OUTPUT2" | grep -q "Source files: 1" || (echo "Incorrect source files count for second replication" && exit 1)
         shell: bash
 
       - name: Test watch command
         run: |
+          # Start watch mode with shorter interval for CI
           timeout 30s frep watch --interval 1 &
           WATCH_PID=$!
-          sleep 5
+
+          # Wait for watch mode to initialize
+          sleep 2
+
+          # Create new file and wait for sync with retry
           echo "New file" > test_src/newfile.txt
-          sleep 5
-          test -f "test_dest/newfile.txt" || exit 1
-          kill $WATCH_PID || true
+
+          # Retry loop for file check
+          for i in $(seq 1 10); do
+            if [[ -f "test_dest/newfile.txt" ]]; then
+              break
+            fi
+            sleep 2
+            if [[ $i -eq 10 ]]; then
+              echo "Watch mode failed to sync new file"
+              exit 1
+            fi
+          done
+
+          # Clean up watch process
+          kill $WATCH_PID 2>/dev/null || true
         shell: bash
 
       - name: Test remove command
         run: |
-          frep remove test_src2 --force
-          ! frep list | grep -q "test_src2" || exit 1
+          frep remove test_src2 --force || (echo "Remove command failed" && exit 1)
+          frep list | grep -q "test_src2" && (echo "Replication still exists after removal" && exit 1)
+
+          # Test sync after removal
           echo "Final test" > test_src/finaltest.txt
-          frep sync
-          test -f "test_dest/finaltest.txt" || exit 1
+          frep sync || (echo "Final sync failed" && exit 1)
+          [[ -f "test_dest/finaltest.txt" ]] || (echo "Final test file not synced" && exit 1)
         shell: bash
 
       - name: Test log commands
         run: |
-          frep logs --tail 10
-          frep logs --clear --force
-          ! test -s "$(find ~/.local/share/FolderReplicator/logs -type f -name "*.log")" || exit 1
+          # Test log viewing
+          frep logs --tail 10 || (echo "Failed to view logs" && exit 1)
+
+          # Clear logs and verify
+          frep logs --clear --force || (echo "Failed to clear logs" && exit 1)
+
+          # Check if logs are cleared using find, accounting for different OS paths
+          LOG_FILES=$(find ~/.local/share/FolderReplicator/logs -type f -name "*.log" 2>/dev/null || find "$LOCALAPPDATA/FolderReplicator/Logs" -type f -name "*.log" 2>/dev/null || true)
+          [[ -z "$LOG_FILES" ]] || (echo "Log files still exist after clear" && exit 1)
         shell: bash
