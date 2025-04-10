@@ -46,7 +46,7 @@ htmlcov/
 *.swp
 *.swo
 test_*/
-references/
+references
 
 # Environment files
 .env
