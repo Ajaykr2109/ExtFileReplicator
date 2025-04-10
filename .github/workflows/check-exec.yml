@@ -94,18 +94,18 @@ jobs:
           # Validate test_src sync (4/4)
           echo "$STATUS_OUTPUT" | grep -q "test_src.*->.*" && 
           echo "$STATUS_OUTPUT" | grep -q "Files synced:.*4/4" || {
-            echo "❌ test_src did not sync 4/4 files as expected."
+            echo "test_src did not sync 4/4 files as expected."
             exit 1
           }
 
           # Validate test_src2 sync (1/1)
           echo "$STATUS_OUTPUT" | grep -q "test_src2.*->.*" && 
           echo "$STATUS_OUTPUT" | grep -q "Files synced:.*1/1" || {
-            echo "❌ test_src2 did not sync 1/1 file as expected."
+            echo "test_src2 did not sync 1/1 file as expected."
             exit 1
           }
 
-          echo "✅ Replication status checks passed."
+          echo "Replication status checks passed."
         shell: bash
 
       - name: Test watch command
