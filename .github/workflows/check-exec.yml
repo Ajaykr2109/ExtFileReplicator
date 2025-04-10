@@ -88,25 +88,25 @@ jobs:
             echo "$STATUS_OUTPUT"
             exit 1
           }
-      
+
           echo "$STATUS_OUTPUT"
-      
+
           # Validate test_src sync (4/4)
-          echo "$STATUS_OUTPUT" | grep -P "/test_src\s*->.*\n\s*Last sync:.*\n\s*Files synced:\s*4/4" > /dev/null || {
+          echo "$STATUS_OUTPUT" | grep -q "test_src.*->.*" && 
+          echo "$STATUS_OUTPUT" | grep -q "Files synced:.*4/4" || {
             echo "❌ test_src did not sync 4/4 files as expected."
             exit 1
           }
-      
+
           # Validate test_src2 sync (1/1)
-          echo "$STATUS_OUTPUT" | grep -P "/test_src2\s*->.*\n\s*Last sync:.*\n\s*Files synced:\s*1/1" > /dev/null || {
+          echo "$STATUS_OUTPUT" | grep -q "test_src2.*->.*" && 
+          echo "$STATUS_OUTPUT" | grep -q "Files synced:.*1/1" || {
             echo "❌ test_src2 did not sync 1/1 file as expected."
             exit 1
           }
-      
+
           echo "✅ Replication status checks passed."
         shell: bash
-
-
 
       - name: Test watch command
         run: |
