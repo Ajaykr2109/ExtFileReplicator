@@ -12,7 +12,6 @@ class ConfigManager:
         self._log_dir = self._init_log_dir()
 
     def _init_log_dir(self):
-        """Initialize and return the log directory path"""
         system = platform.system()
         if system == "Windows":
             log_dir = Path(os.environ.get('LOCALAPPDATA', '')) / \
@@ -26,7 +25,6 @@ class ConfigManager:
         return log_dir
 
     def _load_config(self):
-        """Load configuration from JSON file"""
         try:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r') as f:
@@ -36,7 +34,6 @@ class ConfigManager:
         return {"replications": []}
 
     def save_config(self):
-        """Save configuration to JSON file"""
         try:
             with open(self.config_file, 'w') as f:
                 json.dump(self.config, f, indent=2)
@@ -46,7 +43,6 @@ class ConfigManager:
             return False
 
     def add_replication(self, source, destination, exclusions=None):
-        """Add a new replication pair to configuration"""
         try:
             source = str(Path(source).resolve())
             destination = str(Path(destination).resolve())
@@ -77,11 +73,9 @@ class ConfigManager:
             return False
 
     def get_replications(self):
-        """Get all configured replications"""
         return self.config.get('replications', [])
 
     def update_last_sync(self, replication_index, timestamp):
-        """Update last sync time for a replication"""
         try:
             if 0 <= replication_index < len(self.config['replications']):
                 self.config['replications'][replication_index]['last_sync'] = datetime.fromtimestamp(
@@ -93,45 +87,27 @@ class ConfigManager:
             return False
 
     def remove_replication(self, source_path):
-        """Remove a replication pair by source path"""
-        self.config['replications'] = [r for r in self.config['replications']
-                                       if r['source'] != source_path]
-        return self.save_config()
-
-    def get_log_file(self):
-        """Get path to current log file"""
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        return self._log_dir / f"folder_replicator_{current_date}.log"
-
-    def set_config(self, option, value):
-        """Set a configuration value"""
-        if option == 'log_level':
-            value = value.upper()
-        self.config[option] = value
-        return self.save_config()
-
-    def get_config(self):
-        """Get current configuration"""
-        return {
-            'sync_interval': self.config.get('sync_interval', 60),
-            'log_level': self.config.get('log_level', 'INFO'),
-            'max_log_size': self.config.get('max_log_size', 10)
+        settings = {
+            'sync_interval': self.config.get('sync_interval'),
+            'log_level': self.config.get('log_level'),
+            'max_log_size': self.config.get('max_log_size')
         }
 
-    def get_log_dir(self):
-        """Get the log directory path"""
-        return self._log_dir
+        self.config['replications'] = [r for r in self.config['replications']
+                                       if r['source'] != source_path]
 
-    def get_log_file(self):
-        """Get path to current log file"""
-        log_dir = self.get_log_dir()
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        return log_dir / f"folder_replicator_{current_date}.log"
+        self.config.update(
+            {k: v for k, v in settings.items() if v is not None})
+
+        return self.save_config()
 
     def set_config(self, option, value):
-        """Set a configuration value"""
         if not hasattr(self, 'config'):
             self.config = {}
+
+        valid_options = ['sync_interval', 'log_level', 'max_log_size']
+        if option not in valid_options:
+            return False
 
         if option == 'sync_interval':
             try:
@@ -158,9 +134,16 @@ class ConfigManager:
         return self.save_config()
 
     def get_config(self):
-        """Get current configuration"""
         return {
             'sync_interval': self.config.get('sync_interval', 60),
             'log_level': self.config.get('log_level', 'INFO'),
             'max_log_size': self.config.get('max_log_size', 10)
         }
+
+    def get_log_dir(self):
+        return self._log_dir
+
+    def get_log_file(self):
+        log_dir = self.get_log_dir()
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        return log_dir / f"folder_replicator_{current_date}.log"

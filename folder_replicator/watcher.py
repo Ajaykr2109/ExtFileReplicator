@@ -12,7 +12,7 @@ class ReplicationHandler(FileSystemEventHandler):
         super().__init__()
         self.synchronizer = synchronizer
         self.replication = replication
-        self.debounce_interval = 2  # seconds
+        self.debounce_interval = 2
         self.last_event_time = 0
 
     def on_modified(self, event):
@@ -45,7 +45,6 @@ class ReplicationWatcher:
 
     def watch(self):
         try:
-
             for replication in self.synchronizer.config_manager.get_replications():
                 observer = Observer()
                 handler = ReplicationHandler(self.synchronizer, replication)

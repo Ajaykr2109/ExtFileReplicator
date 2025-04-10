@@ -19,18 +19,24 @@ def getUserLogDir():
     return log_dir
 
 
-def setup_logger(config_manager):
-    """Configure and return logger instance"""
+def setup_logger(config_manager, quiet=False, verbose=False):
     log_file = config_manager.get_log_file()
+    config = config_manager.get_config()
+    log_level = getattr(logging, config.get('log_level', 'INFO'))
+
+    if quiet:
+        log_level = logging.ERROR
+    elif verbose:
+        log_level = logging.DEBUG
 
     logger = logging.getLogger("FolderReplicator")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level)
 
     if logger.handlers:
         logger.handlers = []
 
     file_handler = logging.FileHandler(log_file, encoding='utf-8')
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(log_level)
     file_formatter = logging.Formatter(
         '%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
@@ -38,7 +44,7 @@ def setup_logger(config_manager):
     file_handler.setFormatter(file_formatter)
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(log_level)
     console_formatter = logging.Formatter('%(levelname)s: %(message)s')
     console_handler.setFormatter(console_formatter)
 

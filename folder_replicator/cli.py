@@ -9,7 +9,6 @@ from folder_replicator.logger import setup_logger
 
 def main():
     config_manager = ConfigManager()
-    logger = setup_logger(config_manager)
     parser = argparse.ArgumentParser(description='Folder Replication Tool')
     subparsers = parser.add_subparsers(dest='command', required=True)
     parser.add_argument('--verbose', action='store_true',
@@ -26,7 +25,7 @@ def main():
     add_parser.add_argument('source', help='Source directory path')
     add_parser.add_argument('destination', help='Destination directory path')
     add_parser.add_argument('--exclude', nargs='*',
-                            default=[], help='File patterns to exclude')
+                            default=[], help='File patterns to exclude (e.g., *.tmp cache/ *.pyc)')
 
     sync_parser = subparsers.add_parser('sync', help='Run synchronization')
 
@@ -34,6 +33,8 @@ def main():
         'watch', help='Continuous monitoring mode')
     watch_parser.add_argument('--interval', type=int,
                               default=60, help='Sync interval in minutes')
+    watch_parser.add_argument('--daemon', '-d', action='store_true',
+                              help='Run watch mode as a background process')
 
     subparsers.add_parser('list', help='List all replications')
 
@@ -75,6 +76,8 @@ def main():
 
     args = parser.parse_args()
 
+    logger = setup_logger(
+        config_manager, quiet=args.quiet, verbose=args.verbose)
     config = ConfigManager()
     sync = Synchronizer(config)
 
@@ -97,9 +100,15 @@ def main():
         elif args.command == 'watch':
             logger.info(
                 f"Starting watch mode (interval: {args.interval} minutes)")
-            if not args.dry_run:
-                watcher = ReplicationWatcher(sync, args.interval)
-                watcher.watch()
+            if args.daemon:
+                import subprocess
+                logger.info("Running watch mode in the background")
+                subprocess.Popen([sys.executable, __file__, 'watch', '--interval', str(args.interval)],
+                                 creationflags=subprocess.CREATE_NEW_CONSOLE)
+            else:
+                if not args.dry_run:
+                    watcher = ReplicationWatcher(sync, args.interval)
+                    watcher.watch()
 
         elif args.command == 'list':
             for rep in config.get_replications():
@@ -111,11 +120,11 @@ def main():
                     logger.info("Replication removed")
                 else:
                     logger.error("Replication not found")
+
         elif args.command == 'status':
             replications = config.get_replications()
 
             if args.source_path:
-
                 rep = next(
                     (r for r in replications if r['source'] == args.source_path), None)
                 if not rep:
@@ -132,7 +141,6 @@ def main():
                 if status.get('errors'):
                     print(f"Errors: {status.get('errors', 0)}")
             else:
-
                 if not replications:
                     print("No replications configured")
                     return
@@ -148,39 +156,6 @@ def main():
                         f"  Pending changes: {status.get('pending_changes', 0)}")
                     if status.get('errors'):
                         print(f"  Errors: {status.get('errors', 0)}")
-
-        elif args.command == 'logs':
-            log_file = config.get_log_file()
-
-            if args.clear:
-                if args.force or input("Clear all logs? [y/N] ").lower() == 'y':
-                    try:
-                        with open(log_file, 'w'):
-                            pass
-                        logger.info("Logs cleared successfully")
-                    except Exception as e:
-                        logger.error(f"Failed to clear logs: {str(e)}")
-
-            elif args.tail:
-                try:
-                    with open(log_file, 'r', encoding='utf-8') as f:
-                        lines = f.readlines()
-                        if args.tail > len(lines):
-                            print(f"Only {len(lines)} lines available:")
-                        print(''.join(lines[-args.tail:]))
-                except FileNotFoundError:
-                    logger.error("Log file not found")
-                except Exception as e:
-                    logger.error(f"Error reading logs: {str(e)}")
-
-            else:
-                try:
-                    with open(log_file, 'r', encoding='utf-8') as f:
-                        print(f.read())
-                except FileNotFoundError:
-                    logger.error("Log file not found")
-                except Exception as e:
-                    logger.error(f"Error reading logs: {str(e)}")
 
         elif args.command == 'config':
             if args.config_command == 'set':
@@ -228,7 +203,6 @@ def main():
                     f"Sync interval: {config.get('sync_interval', 60)} minutes")
                 print(f"Log level: {config.get('log_level', 'INFO')}")
                 print(f"Max log size: {config.get('max_log_size', 10)} MB")
-
                 print(f"Log directory: {config_manager.get_log_dir()}")
 
         elif args.command == 'logs':

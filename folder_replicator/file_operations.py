@@ -6,7 +6,6 @@ import hashlib
 class FileOperations:
     @staticmethod
     def safe_copy(src, dest):
-        """Copy file with error handling"""
         try:
             shutil.copy2(src, dest)
             return True
@@ -18,9 +17,7 @@ class FileOperations:
 
     @staticmethod
     def files_identical(file1, file2):
-        """Check if two files are identical using size and hash"""
         try:
-
             if os.path.getsize(file1) != os.path.getsize(file2):
                 return False
 
@@ -30,7 +27,6 @@ class FileOperations:
 
     @staticmethod
     def file_hash(filepath):
-        """Calculate file hash for change detection"""
         hasher = hashlib.md5()
         try:
             with open(filepath, 'rb') as f:
@@ -45,7 +41,6 @@ class FileOperations:
 
     @staticmethod
     def ensure_directory_exists(path):
-        """Create directory if it doesn't exist"""
         try:
             os.makedirs(path, exist_ok=True)
             return True
