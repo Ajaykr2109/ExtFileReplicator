@@ -1,27 +1,21 @@
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "ext_folder_replicator"
 version = "1.1.1"
 description = "A powerful folder synchronization tool"
 requires-python = ">=3.7"
-dynamic = ["readme", "license"]
 authors = [
     {name = "ajaykr2109_nowStack", email = "chaturvedikraj2109@gmail.com"}
 ]
-readme = "README.md"
-license = {text = "MIT"}
+readme = "README.md"  # KEEP this
+license = {text = "MIT"}  # KEEP this
 dependencies = [
     "watchdog>=2.1.0",
     "lockfile>=0.12.2",
     "daemon>=1.2; sys_platform != 'win32'",
     "pywin32>=300; sys_platform == 'win32'"
 ]
+# Remove 'dynamic'
+# dynamic = ["readme", "license"]
 
 [project.scripts]
 frep = "folder_replicator.cli:main"
-
-[tool.setuptools]
-packages = ["folder_replicator"]
