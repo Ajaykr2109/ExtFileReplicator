@@ -2,9 +2,6 @@
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["folder_replicator"]
-
 [project]
 name = "ext_folder_replicator"
 version = "1.0.0"
@@ -12,16 +9,13 @@ description = "A powerful folder synchronization tool"
 requires-python = ">=3.7"
 dependencies = [
     "watchdog>=2.1.0",
-    "daemon>=1.2",
-    "lockfile>=0.12.2"
+    "lockfile>=0.12.2",
+    "daemon>=1.2; sys_platform != 'win32'",
+    "pywin32>=300; sys_platform == 'win32'"
 ]
-
-[project.optional-dependencies]
-windows = ["pywin32>=300"]
 
 [project.scripts]
 frep = "folder_replicator.cli:main"
 
-[tool.pip]
-no-deps = false
-user = true
+[tool.setuptools]
+packages = ["folder_replicator"]
