@@ -84,11 +84,15 @@ jobs:
         run: |
           frep status || (echo "Status command failed" && exit 1)
       
+          # Capture and validate file counts for test_src
           STATUS_OUTPUT=$(frep status test_src)
-          echo "$STATUS_OUTPUT" | grep -q "Files synced: 4/4" || (echo "Incorrect synced files for test_src" && exit 1)
+          SRC_SYNCED=$(echo "$STATUS_OUTPUT" | grep -Eo "Files synced: *[0-9]+/[0-9]+" | head -n 1)
+          [[ "$SRC_SYNCED" == "Files synced: 4/4" ]] || (echo "Expected 4/4 synced for test_src but got '$SRC_SYNCED'" && exit 1)
       
+          # Capture and validate file counts for test_src2
           STATUS_OUTPUT2=$(frep status test_src2)
-          echo "$STATUS_OUTPUT2" | grep -q "Files synced: 1/1" || (echo "Incorrect synced files for test_src2" && exit 1)
+          SRC2_SYNCED=$(echo "$STATUS_OUTPUT2" | grep -Eo "Files synced: *[0-9]+/[0-9]+" | head -n 1)
+          [[ "$SRC2_SYNCED" == "Files synced: 1/1" ]] || (echo "Expected 1/1 synced for test_src2 but got '$SRC2_SYNCED'" && exit 1)
         shell: bash
 
 
