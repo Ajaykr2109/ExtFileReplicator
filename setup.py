@@ -3,7 +3,6 @@ import io
 import os
 import site
 import sys
-from importlib.metadata import version, PackageNotFoundError
 
 
 def read_file(filename):
@@ -14,29 +13,25 @@ def read_file(filename):
 try:
     long_description = read_file("README.md")
 except (IOError, FileNotFoundError):
-    long_description = "A CLI-based folder replication and synchronization tool."
+    long_description = "A powerful folder synchronization tool"
 
-in_venv = sys.prefix != sys.base_prefix
-user_site = site.USER_SITE
-
-# Let setuptools handle the version
 setup(
     name="ext_folder_replicator",
+    version=["version"],
     author="ajaykr2109_nowStack",
     author_email="chaturvedikraj2109@gmail.com",
-    description="A CLI-based folder replication and synchronization tool.",
+    description="A powerful folder synchronization tool",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Ajaykr2109/ExtFileReplicator",
     packages=find_packages(exclude=["tests*"]),
+    python_requires=">=3.7",
     install_requires=[
         "watchdog>=2.1.0",
-        "daemon>=1.2",
         "lockfile>=0.12.2",
-    ],
-    extras_require={
-        "windows": ["pywin32>=300; sys_platform == 'win32'"]
-    },
+    ] + (
+        ["daemon>=1.2"] if sys.platform != "win32" else ["pywin32>=300"]
+    ),
     entry_points={
         "console_scripts": [
             "frep=folder_replicator.cli:main",
@@ -50,13 +45,6 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: System :: Filesystems",
     ],
-    python_requires=">=3.7",
     include_package_data=True,
     zip_safe=False,
-    options={
-        'install': {
-            'install_lib': 'lib/python' if not in_venv and user_site else None,
-            'user': not in_venv
-        }
-    }
 )
