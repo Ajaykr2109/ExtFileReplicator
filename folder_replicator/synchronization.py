@@ -23,6 +23,7 @@ class Synchronizer:
             destination = replication['destination']
             exclusions = replication.get('exclusions', [])
 
+            logger.debug(f"Starting sync with exclusions: {exclusions}")
             logger.info(f"Starting synchronization: {source} -> {destination}")
             start_time = time.time()
             stats = {'copied': 0, 'skipped': 0, 'removed': 0, 'errors': 0}
@@ -33,6 +34,10 @@ class Synchronizer:
                 return False
 
             for root, dirs, files in os.walk(source):
+                logger.debug(f"Processing directory: {root}")
+                logger.debug(
+                    f"Found {len(files)} files and {len(dirs)} subdirectories")
+
                 dirs[:] = [d for d in dirs if not self._is_excluded(
                     os.path.join(root, d), exclusions)]
                 rel_path = os.path.relpath(root, source)
@@ -45,15 +50,22 @@ class Synchronizer:
                 for file in files:
                     src_file = os.path.join(root, file)
                     dest_file = os.path.join(dest_dir, file)
+                    logger.debug(f"Processing file: {src_file}")
 
                     if self._is_excluded(src_file, exclusions):
+                        logger.debug(f"Skipping excluded file: {src_file}")
                         stats['skipped'] += 1
                         continue
 
                     if os.path.exists(dest_file):
                         if FileOperations.files_identical(src_file, dest_file):
+                            logger.debug(
+                                f"Files identical, skipping: {src_file}")
                             stats['skipped'] += 1
                             continue
+                        else:
+                            logger.debug(
+                                f"Files different, updating: {src_file}")
 
                     if FileOperations.safe_copy(src_file, dest_file):
                         stats['copied'] += 1
@@ -74,6 +86,7 @@ class Synchronizer:
             )
 
             elapsed = time.time() - start_time
+            logger.debug(f"Sync completed in {elapsed:.2f} seconds")
             logger.info("Synchronization statistics: " +
                         f"Copied: {stats['copied']}, " +
                         f"Skipped: {stats['skipped']}, " +
@@ -144,33 +157,6 @@ class Synchronizer:
         return stats
 
     def check_status(self, replication):
-        """Check status of a replication"""
-        source = replication['source']
-        destination = replication['destination']
-
-        if not os.path.exists(source):
-            return {'error': 'Source path does not exist'}
-
-        if not os.path.exists(destination):
-            return {'error': 'Destination path does not exist'}
-
-        source_files = set()
-        for root, _, files in os.walk(source):
-            for file in files:
-                source_files.add(os.path.join(root, file))
-
-        dest_files = set()
-        for root, _, files in os.walk(destination):
-            for file in files:
-                dest_files.add(os.path.join(root, file))
-
-        return {
-            'last_sync': replication.get('last_sync', 'Never'),
-            'files_synced': len(dest_files),
-            'pending_changes': len(source_files - dest_files)
-        }
-
-    def check_status(self, replication):
         """Check the sync status of a replication pair"""
         source = replication['source']
         destination = replication['destination']
@@ -183,7 +169,6 @@ class Synchronizer:
         }
 
         try:
-
             if os.path.exists(source):
                 for root, _, files in os.walk(source):
                     stats['source_files'] += len(files)

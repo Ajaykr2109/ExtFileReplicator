@@ -98,40 +98,14 @@ class ConfigManager:
                                        if r['source'] != source_path]
         return self.save_config()
 
-    def get_log_file(self):
-        """Get path to current log file"""
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        return self._log_dir / f"folder_replicator_{current_date}.log"
-
-    def set_config(self, option, value):
-        """Set a configuration value"""
-        if option == 'log_level':
-            value = value.upper()
-        self.config[option] = value
-        return self.save_config()
-
-    def get_config(self):
-        """Get current configuration"""
-        return {
-            'sync_interval': self.config.get('sync_interval', 60),
-            'log_level': self.config.get('log_level', 'INFO'),
-            'max_log_size': self.config.get('max_log_size', 10)
-        }
-
-    def get_log_dir(self):
-        """Get the log directory path"""
-        return self._log_dir
-
-    def get_log_file(self):
-        """Get path to current log file"""
-        log_dir = self.get_log_dir()
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        return log_dir / f"folder_replicator_{current_date}.log"
-
     def set_config(self, option, value):
         """Set a configuration value"""
         if not hasattr(self, 'config'):
             self.config = {}
+
+        valid_options = ['sync_interval', 'log_level', 'max_log_size']
+        if option not in valid_options:
+            return False
 
         if option == 'sync_interval':
             try:
@@ -164,3 +138,13 @@ class ConfigManager:
             'log_level': self.config.get('log_level', 'INFO'),
             'max_log_size': self.config.get('max_log_size', 10)
         }
+
+    def get_log_dir(self):
+        """Get the log directory path"""
+        return self._log_dir
+
+    def get_log_file(self):
+        """Get path to current log file"""
+        log_dir = self.get_log_dir()
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        return log_dir / f"folder_replicator_{current_date}.log"
