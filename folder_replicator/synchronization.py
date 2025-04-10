@@ -12,12 +12,10 @@ class Synchronizer:
         self.config_manager = config_manager
 
     def sync_all(self):
-        """Sync all configured replications"""
         for replication in self.config_manager.get_replications():
             self.sync_replication(replication)
 
     def sync_replication(self, replication):
-        """Synchronize source to destination with statistics"""
         try:
             source = replication['source']
             destination = replication['destination']
@@ -101,7 +99,6 @@ class Synchronizer:
             return False
 
     def _is_excluded(self, path, exclusions):
-        """Check if path matches any exclusion pattern"""
         path = path.replace('\\', '/')
         return any(excl in path for excl in exclusions)
 
@@ -157,7 +154,6 @@ class Synchronizer:
         return stats
 
     def check_status(self, replication):
-        """Check the sync status of a replication pair"""
         source = replication['source']
         destination = replication['destination']
         stats = {

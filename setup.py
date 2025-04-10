@@ -1,23 +1,20 @@
-# -*- coding: utf-8 -*-
+from setuptools import setup, find_packages
+import io
 import os
 import site
 import sys
-from setuptools import setup, find_packages
 
 
 def read_file(filename):
-    """Read a UTF-8 encoded text file and return its contents."""
     with open(filename, "r", encoding="utf-8") as f:
         return f.read()
 
 
-# Get the long description from README.md
 try:
     long_description = read_file("README.md")
 except (IOError, FileNotFoundError):
     long_description = "A CLI-based folder replication and synchronization tool."
 
-# Detect if we're in a virtual environment
 in_venv = sys.prefix != sys.base_prefix
 user_site = site.USER_SITE
 

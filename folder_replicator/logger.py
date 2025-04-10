@@ -20,12 +20,10 @@ def getUserLogDir():
 
 
 def setup_logger(config_manager, quiet=False, verbose=False):
-    """Configure and return logger instance"""
     log_file = config_manager.get_log_file()
     config = config_manager.get_config()
     log_level = getattr(logging, config.get('log_level', 'INFO'))
 
-    # Adjust log level based on flags
     if quiet:
         log_level = logging.ERROR
     elif verbose:
