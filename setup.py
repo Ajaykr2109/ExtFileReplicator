@@ -3,6 +3,7 @@ import io
 import os
 import site
 import sys
+from importlib.metadata import version, PackageNotFoundError
 
 
 def read_file(filename):
@@ -18,9 +19,9 @@ except (IOError, FileNotFoundError):
 in_venv = sys.prefix != sys.base_prefix
 user_site = site.USER_SITE
 
+# Let setuptools handle the version
 setup(
     name="ext_folder_replicator",
-    version="1.0.0",
     author="ajaykr2109_nowStack",
     author_email="chaturvedikraj2109@gmail.com",
     description="A CLI-based folder replication and synchronization tool.",

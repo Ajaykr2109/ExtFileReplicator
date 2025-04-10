@@ -1,6 +1,7 @@
 import argparse
 import sys
 from pathlib import Path
+import importlib.metadata
 from folder_replicator.config_manager import ConfigManager
 from folder_replicator.synchronization import Synchronizer
 from folder_replicator.watcher import ReplicationWatcher
@@ -19,6 +20,8 @@ def main():
                         help='Simulation mode')
     parser.add_argument('--force', action='store_true',
                         help='Skip confirmations')
+    parser.add_argument('-v', '--version', action='store_true',
+                        help='Show version')
 
     add_parser = subparsers.add_parser(
         'add', help='Add a new replication pair')
@@ -74,14 +77,23 @@ def main():
         p.add_argument('--force', action='store_true',
                        help='Skip confirmations')
 
-    args = parser.parse_args()
-
-    logger = setup_logger(
-        config_manager, quiet=args.quiet, verbose=args.verbose)
-    config = ConfigManager()
-    sync = Synchronizer(config)
-
     try:
+        if len(sys.argv) == 2 and (sys.argv[1] == '-v' or sys.argv[1] == '--version'):
+            try:
+                version = importlib.metadata.version('ext_folder_replicator')
+                print(f"ext_folder_replicator version {version}")
+                return 0
+            except importlib.metadata.PackageNotFoundError:
+                print("Version information not available")
+                return 1
+
+        args = parser.parse_args()
+
+        logger = setup_logger(
+            config_manager, quiet=args.quiet, verbose=args.verbose)
+        config = ConfigManager()
+        sync = Synchronizer(config)
+
         if args.command == 'add':
             logger.info(
                 f"Adding replication: {args.source} -> {args.destination}")
