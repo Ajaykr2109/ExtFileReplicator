@@ -6,16 +6,17 @@ requires-python = ">=3.7"
 authors = [
     {name = "ajaykr2109_nowStack", email = "chaturvedikraj2109@gmail.com"}
 ]
-readme = "README.md"  # KEEP this
-license = {text = "MIT"}  # KEEP this
+readme = "README.md"
+license = {text = "MIT"}
 dependencies = [
     "watchdog>=2.1.0",
     "lockfile>=0.12.2",
     "daemon>=1.2; sys_platform != 'win32'",
-    "pywin32>=300; sys_platform == 'win32'"
+    "pywin32>=300; sys_platform == 'win32'",
+    "PyQt6>=6.6.1",
+    "QDarkStyle>=3.2.0"
 ]
-# Remove 'dynamic'
-# dynamic = ["readme", "license"]
 
 [project.scripts]
 frep = "folder_replicator.cli:main"
+frep-gui = "folder_replicator.gui:run_gui"

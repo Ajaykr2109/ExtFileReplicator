@@ -42,6 +42,7 @@ class ReplicationWatcher:
         self.observers = []
         self.interval = interval_minutes * 60
         self.stop_event = threading.Event()
+        self.sync_thread = None
 
     def watch(self):
         try:
@@ -54,35 +55,59 @@ class ReplicationWatcher:
                 self.observers.append(observer)
                 logger.info(f"Watching for changes: {replication['source']}")
 
-            sync_thread = threading.Thread(target=self._periodic_sync)
-            sync_thread.daemon = True
-            sync_thread.start()
+            self.sync_thread = threading.Thread(target=self._periodic_sync)
+            self.sync_thread.daemon = True
+            self.sync_thread.start()
 
-            logger.info("Press Ctrl+C to stop watching...")
-            while not self.stop_event.is_set():
-                time.sleep(1)
+            try:
+                while not self.stop_event.is_set():
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                self.stop()
 
-        except KeyboardInterrupt:
-            self.stop()
         except Exception as e:
             logger.error(f"Error in watch mode: {str(e)}", exc_info=True)
             self.stop()
+        finally:
+            self.cleanup()
 
     def _periodic_sync(self):
         while not self.stop_event.is_set():
-            logger.info(
-                f"Running periodic sync (every {self.interval//60} minutes)")
-            self.synchronizer.sync_all()
+            try:
+                logger.info(
+                    f"Running periodic sync (every {self.interval//60} minutes)")
+                self.synchronizer.sync_all()
 
-            for _ in range(self.interval):
-                if self.stop_event.is_set():
-                    break
-                time.sleep(1)
+                for _ in range(self.interval):
+                    if self.stop_event.is_set():
+                        break
+                    time.sleep(1)
+            except Exception as e:
+                logger.error(f"Error in periodic sync: {str(e)}")
+                break
 
     def stop(self):
         logger.info("Stopping watchers and sync threads")
         self.stop_event.set()
+
+    def cleanup(self):
+        self.stop_event.set()
+
+        # Stop and join all observers
         for observer in self.observers:
-            observer.stop()
-        for observer in self.observers:
-            observer.join()
+            try:
+                if observer.is_alive():
+                    observer.stop()
+                    observer.join(timeout=5)
+            except Exception as e:
+                logger.error(f"Error stopping observer: {str(e)}")
+
+        # Wait for sync thread to finish
+        if self.sync_thread and self.sync_thread.is_alive():
+            try:
+                self.sync_thread.join(timeout=5)
+            except Exception as e:
+                logger.error(f"Error stopping sync thread: {str(e)}")
+
+        self.observers = []
+        self.sync_thread = None
