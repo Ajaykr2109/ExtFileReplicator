@@ -60,7 +60,7 @@ venv.bak/
 # Project specific ignores
 replicator_config.json
 *.log
-open-s.code-workspace
+ExtFileReplicator.code-workspace
 version_info.py
 installer.nsi
 
