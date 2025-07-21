@@ -1,17 +1,20 @@
 import argparse
 import sys
+import logging
 from pathlib import Path
 import importlib.metadata
 from folder_replicator.config_manager import ConfigManager
 from folder_replicator.synchronization import Synchronizer
 from folder_replicator.watcher import ReplicationWatcher
 from folder_replicator.logger import setup_logger
+from folder_replicator.gui import run_gui
 
 
 def main():
     config_manager = ConfigManager()
+    watcher = None  # Store watcher instance at module level
+
     parser = argparse.ArgumentParser(description='Folder Replication Tool')
-    subparsers = parser.add_subparsers(dest='command', required=True)
     parser.add_argument('--verbose', action='store_true',
                         help='Verbose output')
     parser.add_argument('--quiet', action='store_true',
@@ -20,17 +23,25 @@ def main():
                         help='Simulation mode')
     parser.add_argument('--force', action='store_true',
                         help='Skip confirmations')
-    parser.add_argument('-v', '--version', action='store_true',
-                        help='Show version')
+    parser.add_argument('-v', '--version',
+                        action='store_true', help='Show version')
 
+    subparsers = parser.add_subparsers(dest='command', required=False)
+
+    # GUI command
+    gui_parser = subparsers.add_parser('gui', help='Launch GUI interface')
+
+    # Add command
     add_parser = subparsers.add_parser(
         'add', help='Add a new replication pair')
     add_parser.add_argument('source', help='Source directory path')
     add_parser.add_argument('destination', help='Destination directory path')
-    add_parser.add_argument('--exclude', nargs='*',
-                            default=[], help='File patterns to exclude (e.g., *.tmp cache/ *.pyc)')
+    add_parser.add_argument('--exclude', nargs='*', default=[],
+                            help='File patterns to exclude (e.g., *.tmp cache/ *.pyc)')
 
     sync_parser = subparsers.add_parser('sync', help='Run synchronization')
+    sync_parser.add_argument('source_path', nargs='?',
+                             help='Specific source path to sync')
 
     watch_parser = subparsers.add_parser(
         'watch', help='Continuous monitoring mode')
@@ -78,6 +89,9 @@ def main():
                        help='Skip confirmations')
 
     try:
+        if len(sys.argv) == 1:
+            return run_gui()  # Default to GUI when no arguments
+
         if len(sys.argv) == 2 and (sys.argv[1] == '-v' or sys.argv[1] == '--version'):
             try:
                 version = importlib.metadata.version('ext_folder_replicator')
@@ -88,6 +102,18 @@ def main():
                 return 1
 
         args = parser.parse_args()
+
+        # Launch GUI if requested
+        if args.command == 'gui' or not args.command:
+            try:
+                return run_gui()
+            except ImportError as e:
+                print(
+                    "Error: GUI dependencies not installed. Please install with: pip install PyQt6 QDarkStyle")
+                return 1
+            except Exception as e:
+                print(f"Error launching GUI: {str(e)}")
+                return 1
 
         logger = setup_logger(
             config_manager, quiet=args.quiet, verbose=args.verbose)
@@ -107,7 +133,18 @@ def main():
         elif args.command == 'sync':
             logger.info("Starting synchronization")
             if not args.dry_run:
-                sync.sync_all()
+                if args.source_path:
+                    # Sync specific replication
+                    replications = [r for r in config.get_replications()
+                                    if r['source'] == args.source_path]
+                    if not replications:
+                        logger.error(
+                            f"No replication found for source: {args.source_path}")
+                        return 1
+                    sync.sync_replication(replications[0])
+                else:
+                    # Sync all replications
+                    sync.sync_all()
 
         elif args.command == 'watch':
             logger.info(
@@ -120,7 +157,15 @@ def main():
             else:
                 if not args.dry_run:
                     watcher = ReplicationWatcher(sync, args.interval)
-                    watcher.watch()
+                    try:
+                        watcher.watch()
+                    except KeyboardInterrupt:
+                        logger.info(
+                            "Received interrupt signal, stopping gracefully...")
+                    finally:
+                        if watcher:
+                            watcher.stop()
+                            watcher.cleanup()
 
         elif args.command == 'list':
             for rep in config.get_replications():
@@ -249,12 +294,21 @@ def main():
                     logger.error("Log file not found")
                 except Exception as e:
                     logger.error(f"Error reading logs: {str(e)}")
+    except KeyboardInterrupt:
+        logger.info("Received interrupt signal, stopping gracefully...")
+        if watcher:
+            watcher.stop()
+            watcher.cleanup()
     except Exception as e:
         if logger:
             logger.error(f"Error: {str(e)}", exc_info=True)
         else:
             print(f"Critical error before logger setup: {str(e)}")
         return 1
+    finally:
+        if watcher:
+            watcher.stop()
+            watcher.cleanup()
 
 
 if __name__ == '__main__':
